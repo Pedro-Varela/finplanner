@@ -25,6 +25,14 @@ function toEntity(row: CategoryRow): Category {
 export class SupabaseCategoryRepository implements CategoryRepository {
   constructor(private client: SupabaseClient) {}
 
+  private async getUserId(): Promise<string> {
+    const {
+      data: { user },
+    } = await this.client.auth.getUser();
+    if (!user) throw new RepositoryError("Utilizador não autenticado.", "QUERY_FAILED");
+    return user.id;
+  }
+
   async findAll(): Promise<Category[]> {
     const { data, error } = await this.client
       .from(TABLE)
@@ -56,11 +64,13 @@ export class SupabaseCategoryRepository implements CategoryRepository {
   }
 
   async create(input: CreateCategoryInput): Promise<Category> {
+    const userId = await this.getUserId();
     const { data, error } = await this.client
       .from(TABLE)
       .insert({
         name: input.name,
         type: input.type,
+        user_id: userId,
       })
       .select()
       .single();

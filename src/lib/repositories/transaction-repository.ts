@@ -29,6 +29,14 @@ function toEntity(row: TransactionRow): Transaction {
 export class SupabaseTransactionRepository implements TransactionRepository {
   constructor(private client: SupabaseClient) {}
 
+  private async getUserId(): Promise<string> {
+    const {
+      data: { user },
+    } = await this.client.auth.getUser();
+    if (!user) throw new RepositoryError("Utilizador não autenticado.", "QUERY_FAILED");
+    return user.id;
+  }
+
   async findAll(): Promise<Transaction[]> {
     const { data, error } = await this.client
       .from(TABLE)
@@ -60,6 +68,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
   }
 
   async create(input: CreateTransactionInput): Promise<Transaction> {
+    const userId = await this.getUserId();
     const { data, error } = await this.client
       .from(TABLE)
       .insert({
@@ -68,6 +77,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         type: input.type,
         category_id: input.categoryId,
         date: input.date,
+        user_id: userId,
       })
       .select()
       .single();
