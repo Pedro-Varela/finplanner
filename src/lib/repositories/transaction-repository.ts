@@ -13,27 +13,18 @@ import { RepositoryError } from "./errors";
 
 const TABLE = "transactions";
 
-// ---------------------------------------------------------------------------
-// Mapper: Row (snake_case) → Entity (camelCase)
-// ---------------------------------------------------------------------------
-
 function toEntity(row: TransactionRow): Transaction {
   return {
     id: row.id as TransactionId,
     userId: row.user_id as UserId,
-    description: row.description,
+    title: row.title,
     amount: row.amount,
     type: row.type,
     categoryId: row.category_id as CategoryId,
     date: row.date,
     createdAt: row.created_at,
-    updatedAt: row.updated_at,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Repository — apenas acesso a dados, zero lógica de negócio
-// ---------------------------------------------------------------------------
 
 export class SupabaseTransactionRepository implements TransactionRepository {
   constructor(private client: SupabaseClient) {}
@@ -51,7 +42,6 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         error
       );
     }
-
     return (data as TransactionRow[]).map(toEntity);
   }
 
@@ -66,7 +56,6 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         error
       );
     }
-
     return toEntity(data as TransactionRow);
   }
 
@@ -74,7 +63,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
     const { data, error } = await this.client
       .from(TABLE)
       .insert({
-        description: input.description,
+        title: input.title,
         amount: input.amount,
         type: input.type,
         category_id: input.categoryId,
@@ -90,13 +79,12 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         error
       );
     }
-
     return toEntity(data as TransactionRow);
   }
 
   async update(id: TransactionId, input: UpdateTransactionInput): Promise<Transaction> {
     const row: Record<string, unknown> = {};
-    if (input.description !== undefined) row.description = input.description;
+    if (input.title !== undefined) row.title = input.title;
     if (input.amount !== undefined) row.amount = input.amount;
     if (input.type !== undefined) row.type = input.type;
     if (input.categoryId !== undefined) row.category_id = input.categoryId;
@@ -119,13 +107,11 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         error
       );
     }
-
     return toEntity(data as TransactionRow);
   }
 
   async delete(id: TransactionId): Promise<void> {
     const { error } = await this.client.from(TABLE).delete().eq("id", id);
-
     if (error) {
       throw new RepositoryError(
         `Falha ao remover transação ${id}: ${error.message}`,

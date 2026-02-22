@@ -6,10 +6,6 @@ import type {
 } from "../entities";
 import { ValidationError } from "../errors";
 
-// ---------------------------------------------------------------------------
-// Repository interface (implementada em lib/)
-// ---------------------------------------------------------------------------
-
 export interface TransactionRepository {
   findAll(): Promise<Transaction[]>;
   findById(id: TransactionId): Promise<Transaction | null>;
@@ -17,10 +13,6 @@ export interface TransactionRepository {
   update(id: TransactionId, data: UpdateTransactionInput): Promise<Transaction>;
   delete(id: TransactionId): Promise<void>;
 }
-
-// ---------------------------------------------------------------------------
-// Validação compartilhada
-// ---------------------------------------------------------------------------
 
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -30,9 +22,9 @@ function validateAmount(amount: number) {
   }
 }
 
-function validateDescription(description: string) {
-  if (!description.trim()) {
-    throw new ValidationError("A descrição é obrigatória.", "description");
+function validateTitle(title: string) {
+  if (!title.trim()) {
+    throw new ValidationError("O título é obrigatório.", "title");
   }
 }
 
@@ -41,10 +33,6 @@ function validateDate(date: string) {
     throw new ValidationError("A data deve estar no formato YYYY-MM-DD.", "date");
   }
 }
-
-// ---------------------------------------------------------------------------
-// Use cases
-// ---------------------------------------------------------------------------
 
 export class ListTransactions {
   constructor(private repository: TransactionRepository) {}
@@ -58,10 +46,9 @@ export class CreateTransaction {
   constructor(private repository: TransactionRepository) {}
 
   async execute(data: CreateTransactionInput): Promise<Transaction> {
-    validateDescription(data.description);
+    validateTitle(data.title);
     validateAmount(data.amount);
     validateDate(data.date);
-
     return this.repository.create(data);
   }
 }
@@ -70,7 +57,7 @@ export class UpdateTransaction {
   constructor(private repository: TransactionRepository) {}
 
   async execute(id: TransactionId, data: UpdateTransactionInput): Promise<Transaction> {
-    if (data.description !== undefined) validateDescription(data.description);
+    if (data.title !== undefined) validateTitle(data.title);
     if (data.amount !== undefined) validateAmount(data.amount);
     if (data.date !== undefined) validateDate(data.date);
 
@@ -78,7 +65,6 @@ export class UpdateTransaction {
     if (!hasFields) {
       throw new ValidationError("Nenhum campo para atualizar foi informado.");
     }
-
     return this.repository.update(id, data);
   }
 }

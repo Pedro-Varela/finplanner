@@ -12,24 +12,15 @@ import { RepositoryError } from "./errors";
 
 const TABLE = "categories";
 
-// ---------------------------------------------------------------------------
-// Mapper: Row (snake_case) → Entity (camelCase)
-// ---------------------------------------------------------------------------
-
 function toEntity(row: CategoryRow): Category {
   return {
     id: row.id as CategoryId,
     userId: row.user_id as UserId,
     name: row.name,
-    color: row.color,
-    icon: row.icon ?? undefined,
+    type: row.type,
     createdAt: row.created_at,
   };
 }
-
-// ---------------------------------------------------------------------------
-// Repository — apenas acesso a dados, zero lógica de negócio
-// ---------------------------------------------------------------------------
 
 export class SupabaseCategoryRepository implements CategoryRepository {
   constructor(private client: SupabaseClient) {}
@@ -47,7 +38,6 @@ export class SupabaseCategoryRepository implements CategoryRepository {
         error
       );
     }
-
     return (data as CategoryRow[]).map(toEntity);
   }
 
@@ -62,7 +52,6 @@ export class SupabaseCategoryRepository implements CategoryRepository {
         error
       );
     }
-
     return toEntity(data as CategoryRow);
   }
 
@@ -71,8 +60,7 @@ export class SupabaseCategoryRepository implements CategoryRepository {
       .from(TABLE)
       .insert({
         name: input.name,
-        color: input.color,
-        icon: input.icon ?? null,
+        type: input.type,
       })
       .select()
       .single();
@@ -84,15 +72,13 @@ export class SupabaseCategoryRepository implements CategoryRepository {
         error
       );
     }
-
     return toEntity(data as CategoryRow);
   }
 
   async update(id: CategoryId, input: UpdateCategoryInput): Promise<Category> {
     const row: Record<string, unknown> = {};
     if (input.name !== undefined) row.name = input.name;
-    if (input.color !== undefined) row.color = input.color;
-    if (input.icon !== undefined) row.icon = input.icon;
+    if (input.type !== undefined) row.type = input.type;
 
     const { data, error } = await this.client
       .from(TABLE)
@@ -111,13 +97,11 @@ export class SupabaseCategoryRepository implements CategoryRepository {
         error
       );
     }
-
     return toEntity(data as CategoryRow);
   }
 
   async delete(id: CategoryId): Promise<void> {
     const { error } = await this.client.from(TABLE).delete().eq("id", id);
-
     if (error) {
       throw new RepositoryError(
         `Falha ao remover categoria ${id}: ${error.message}`,

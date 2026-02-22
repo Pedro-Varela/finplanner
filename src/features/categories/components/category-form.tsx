@@ -15,24 +15,16 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { Category } from "@/core/entities";
 import { categorySchema, type CategoryFormValues } from "../schemas";
 import { createCategoryAction, updateCategoryAction } from "../actions";
-
-const PRESET_COLORS = [
-  "#ef4444",
-  "#f97316",
-  "#eab308",
-  "#22c55e",
-  "#10b981",
-  "#06b6d4",
-  "#3b82f6",
-  "#6366f1",
-  "#8b5cf6",
-  "#ec4899",
-  "#f43f5e",
-  "#64748b",
-];
 
 interface CategoryFormProps {
   open: boolean;
@@ -49,8 +41,7 @@ export function CategoryForm({ open, onOpenChange, onSuccess, category }: Catego
     resolver: zodResolver(categorySchema),
     defaultValues: {
       name: "",
-      color: PRESET_COLORS[0],
-      icon: "",
+      type: "expense",
     },
   });
 
@@ -58,14 +49,12 @@ export function CategoryForm({ open, onOpenChange, onSuccess, category }: Catego
     if (open && category) {
       form.reset({
         name: category.name,
-        color: category.color,
-        icon: category.icon ?? "",
+        type: category.type,
       });
     } else if (open) {
       form.reset({
         name: "",
-        color: PRESET_COLORS[0],
-        icon: "",
+        type: "expense",
       });
     }
   }, [open, category, form]);
@@ -86,8 +75,6 @@ export function CategoryForm({ open, onOpenChange, onSuccess, category }: Catego
       onSuccess();
     });
   }
-
-  const selectedColor = form.watch("color");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -114,53 +101,21 @@ export function CategoryForm({ open, onOpenChange, onSuccess, category }: Catego
 
             <FormField
               control={form.control}
-              name="color"
+              name="type"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Cor</FormLabel>
-                  <div className="flex flex-wrap gap-2">
-                    {PRESET_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className={`h-8 w-8 rounded-full border-2 transition-transform hover:scale-110 ${
-                          selectedColor === color
-                            ? "border-foreground scale-110"
-                            : "border-transparent"
-                        }`}
-                        style={{ backgroundColor: color }}
-                        onClick={() => field.onChange(color)}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-2 pt-1">
+                  <FormLabel>Tipo</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <Input
-                        type="text"
-                        placeholder="#RRGGBB"
-                        className="w-28 font-mono text-sm"
-                        {...field}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione" />
+                      </SelectTrigger>
                     </FormControl>
-                    <div
-                      className="h-8 w-8 rounded-full border"
-                      style={{ backgroundColor: field.value }}
-                    />
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="icon"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Ícone (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: 🍔, 🚗, 💰..." {...field} />
-                  </FormControl>
+                    <SelectContent>
+                      <SelectItem value="income">Receita</SelectItem>
+                      <SelectItem value="expense">Despesa</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

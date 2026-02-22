@@ -27,8 +27,7 @@ export async function createCategoryAction(
   try {
     const category = await new CreateCategory(repo()).execute({
       name: formData.name as string,
-      color: formData.color as string,
-      icon: (formData.icon as string) || undefined,
+      type: formData.type as "income" | "expense",
     });
     revalidatePath("/categories");
     revalidatePath("/transactions");
@@ -45,8 +44,7 @@ export async function updateCategoryAction(
   try {
     const category = await new UpdateCategory(repo()).execute(id as CategoryId, {
       name: formData.name as string,
-      color: formData.color as string,
-      icon: (formData.icon as string) || undefined,
+      type: formData.type as "income" | "expense",
     });
     revalidatePath("/categories");
     revalidatePath("/transactions");

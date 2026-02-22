@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -77,36 +78,40 @@ export function CategoryList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">Cor</TableHead>
               <TableHead>Nome</TableHead>
-              <TableHead>Ícone</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead className="w-12" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading && categories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : categories.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={3} className="h-24 text-center text-muted-foreground">
                   Nenhuma categoria encontrada. Crie a primeira!
                 </TableCell>
               </TableRow>
             ) : (
               categories.map((cat) => (
                 <TableRow key={cat.id}>
-                  <TableCell>
-                    <span
-                      className="inline-block h-5 w-5 rounded-full border"
-                      style={{ backgroundColor: cat.color }}
-                    />
-                  </TableCell>
                   <TableCell className="font-medium">{cat.name}</TableCell>
-                  <TableCell>{cat.icon || "—"}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={cat.type === "income" ? "default" : "secondary"}
+                      className={
+                        cat.type === "income"
+                          ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-400"
+                          : "bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-950 dark:text-red-400"
+                      }
+                    >
+                      {cat.type === "income" ? "Receita" : "Despesa"}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

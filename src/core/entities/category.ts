@@ -1,30 +1,21 @@
 import type { CategoryId, UserId } from "./id";
 
-// ---------------------------------------------------------------------------
-// Entity — modelo de domínio completo
-// ---------------------------------------------------------------------------
+export type CategoryType = "income" | "expense";
 
 export interface Category {
   id: CategoryId;
   userId: UserId;
   name: string;
-  color: string;
-  icon?: string;
-  createdAt: string; // ISO 8601
+  type: CategoryType;
+  createdAt: string;
 }
 
-// ---------------------------------------------------------------------------
-// DTOs — contratos de entrada
-// ---------------------------------------------------------------------------
-// as
 export interface CreateCategoryInput {
   name: string;
-  color: string;
-  icon?: string;
+  type: CategoryType;
 }
 
 export interface UpdateCategoryInput {
   name?: string;
-  color?: string;
-  icon?: string;
+  type?: CategoryType;
 }

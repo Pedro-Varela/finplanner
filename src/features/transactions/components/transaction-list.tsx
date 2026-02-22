@@ -91,7 +91,7 @@ export function TransactionList() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Descrição</TableHead>
+              <TableHead>Título</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead>Data</TableHead>
               <TableHead className="text-right">Valor</TableHead>
@@ -116,16 +116,10 @@ export function TransactionList() {
                 const cat = categoryMap.get(tx.categoryId);
                 return (
                   <TableRow key={tx.id}>
-                    <TableCell className="font-medium">{tx.description}</TableCell>
+                    <TableCell className="font-medium">{tx.title}</TableCell>
                     <TableCell>
                       {cat ? (
-                        <Badge variant="outline" className="gap-1">
-                          <span
-                            className="inline-block h-2 w-2 rounded-full"
-                            style={{ backgroundColor: cat.color }}
-                          />
-                          {cat.name}
-                        </Badge>
+                        <Badge variant="outline">{cat.name}</Badge>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}

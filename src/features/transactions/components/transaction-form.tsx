@@ -46,7 +46,7 @@ export function TransactionForm({
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
-      description: "",
+      title: "",
       amount: 0,
       type: "expense",
       categoryId: "",
@@ -65,7 +65,7 @@ export function TransactionForm({
   useEffect(() => {
     if (open && transaction) {
       form.reset({
-        description: transaction.description,
+        title: transaction.title,
         amount: transaction.amount,
         type: transaction.type,
         categoryId: transaction.categoryId,
@@ -73,7 +73,7 @@ export function TransactionForm({
       });
     } else if (open) {
       form.reset({
-        description: "",
+        title: "",
         amount: 0,
         type: "expense",
         categoryId: "",
@@ -110,10 +110,10 @@ export function TransactionForm({
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <FormField
               control={form.control}
-              name="description"
+              name="title"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
+                  <FormLabel>Título</FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Salário, Aluguel..." {...field} />
                   </FormControl>

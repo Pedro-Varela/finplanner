@@ -53,8 +53,8 @@ export function DeleteTransactionDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Excluir transação</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir &quot;{transaction?.description}&quot;? Esta ação não
-            pode ser desfeita.
+            Tem certeza que deseja excluir &quot;{transaction?.title}&quot;? Esta ação não pode ser
+            desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

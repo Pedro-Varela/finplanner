@@ -5,8 +5,7 @@ export const categorySchema = z.object({
     .string()
     .min(1, "O nome é obrigatório.")
     .max(50, "O nome deve ter no máximo 50 caracteres."),
-  color: z.string().regex(/^#[0-9a-fA-F]{6}$/, "Cor inválida (formato #RRGGBB)."),
-  icon: z.string().optional(),
+  type: z.enum(["income", "expense"], { error: "Selecione o tipo." }),
 });
 
 export type CategoryFormValues = z.infer<typeof categorySchema>;

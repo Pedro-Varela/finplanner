@@ -32,7 +32,7 @@ export async function createTransactionAction(
 ): Promise<ActionResult<Transaction>> {
   try {
     const transaction = await new CreateTransaction(repo()).execute({
-      description: formData.description as string,
+      title: formData.title as string,
       amount: formData.amount as number,
       type: formData.type as "income" | "expense",
       categoryId: formData.categoryId as CategoryId,
@@ -52,7 +52,7 @@ export async function updateTransactionAction(
 ): Promise<ActionResult<Transaction>> {
   try {
     const transaction = await new UpdateTransaction(repo()).execute(id as TransactionId, {
-      description: formData.description as string,
+      title: formData.title as string,
       amount: formData.amount as number,
       type: formData.type as "income" | "expense",
       categoryId: formData.categoryId as CategoryId,
