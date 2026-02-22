@@ -1,3 +1,40 @@
 {
-  "extends": ["next/core-web-vitals", "next/typescript"]
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript",
+    "prettier"
+  ],
+  "plugins": ["prettier"],
+  "rules": {
+    "prettier/prettier": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "no-console": "warn",
+    "import/no-restricted-paths": [
+      "error",
+      {
+        "zones": [
+          {
+            "target": "./src/core/**",
+            "from": "./src/app/**",
+            "message": "core não pode importar de app"
+          },
+          {
+            "target": "./src/core/**",
+            "from": "./src/components/**",
+            "message": "core não pode importar de components"
+          },
+          {
+            "target": "./src/core/**",
+            "from": "./src/features/**",
+            "message": "core não pode importar de features"
+          },
+          {
+            "target": "./src/core/**",
+            "from": "./src/lib/supabase/**",
+            "message": "core não pode importar Supabase"
+          }
+        ]
+      }
+    ]
+  }
 }
