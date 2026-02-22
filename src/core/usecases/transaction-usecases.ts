@@ -3,11 +3,12 @@ import type {
   TransactionId,
   CreateTransactionInput,
   UpdateTransactionInput,
+  TransactionFilters,
 } from "../entities";
 import { ValidationError } from "../errors";
 
 export interface TransactionRepository {
-  findAll(): Promise<Transaction[]>;
+  findAll(filters?: TransactionFilters): Promise<Transaction[]>;
   findById(id: TransactionId): Promise<Transaction | null>;
   create(data: CreateTransactionInput): Promise<Transaction>;
   update(id: TransactionId, data: UpdateTransactionInput): Promise<Transaction>;
@@ -37,8 +38,8 @@ function validateDate(date: string) {
 export class ListTransactions {
   constructor(private repository: TransactionRepository) {}
 
-  async execute(): Promise<Transaction[]> {
-    return this.repository.findAll();
+  async execute(filters?: TransactionFilters): Promise<Transaction[]> {
+    return this.repository.findAll(filters);
   }
 }
 

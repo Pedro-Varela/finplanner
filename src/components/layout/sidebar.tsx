@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, ArrowLeftRight, Tag } from "lucide-react";
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Tag,
+  PiggyBank,
+  Landmark,
+  Repeat,
+  UserCircle,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -13,6 +21,10 @@ const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Transações", href: "/transactions", icon: ArrowLeftRight },
   { label: "Categorias", href: "/categories", icon: Tag },
+  { label: "Orçamentos", href: "/budgets", icon: PiggyBank },
+  { label: "Contas", href: "/accounts", icon: Landmark },
+  { label: "Recorrências", href: "/recurring", icon: Repeat },
+  { label: "Perfil", href: "/profile", icon: UserCircle },
 ];
 
 export function Sidebar() {

@@ -2,18 +2,32 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu, LayoutDashboard, ArrowLeftRight, Tag } from "lucide-react";
+import {
+  Menu,
+  LayoutDashboard,
+  ArrowLeftRight,
+  Tag,
+  PiggyBank,
+  Landmark,
+  Repeat,
+  UserCircle,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { LogoutButton } from "@/features/auth";
+import { ThemeToggle } from "./theme-toggle";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Transações", href: "/transactions", icon: ArrowLeftRight },
   { label: "Categorias", href: "/categories", icon: Tag },
+  { label: "Orçamentos", href: "/budgets", icon: PiggyBank },
+  { label: "Contas", href: "/accounts", icon: Landmark },
+  { label: "Recorrências", href: "/recurring", icon: Repeat },
+  { label: "Perfil", href: "/profile", icon: UserCircle },
 ];
 
 export function Header() {
@@ -56,6 +70,8 @@ export function Header() {
       </Sheet>
 
       <div className="flex-1" />
+
+      <ThemeToggle />
 
       {user && (
         <div className="flex items-center gap-3">

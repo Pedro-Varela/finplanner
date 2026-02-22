@@ -6,6 +6,8 @@ import type { DashboardData } from "@/core/usecases";
 import { getDashboardDataAction } from "../actions";
 import { SummaryCards } from "./summary-cards";
 import { MonthlyChart } from "./monthly-chart";
+import { CategoryPieChart } from "./category-pie-chart";
+import { RecentTransactions } from "./recent-transactions";
 
 export function DashboardView() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -14,11 +16,8 @@ export function DashboardView() {
   const load = useCallback(() => {
     startTransition(async () => {
       const result = await getDashboardDataAction();
-      if (result.success) {
-        setData(result.data);
-      } else {
-        toast.error(result.error);
-      }
+      if (result.success) setData(result.data);
+      else toast.error(result.error);
     });
   }, []);
 
@@ -47,13 +46,22 @@ export function DashboardView() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Visão geral das suas finanças.</p>
+        <p className="text-muted-foreground">
+          Resumo do mês atual —{" "}
+          {new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" }).format(new Date())}
+        </p>
       </div>
 
       {data && (
         <>
-          <SummaryCards summary={data.summary} />
-          <MonthlyChart data={data.monthly} />
+          <SummaryCards summary={data.summary} previousSummary={data.previousMonthSummary} />
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <MonthlyChart data={data.monthly} />
+            <CategoryPieChart data={data.byCategory} />
+          </div>
+
+          <RecentTransactions transactions={data.recentTransactions} />
         </>
       )}
     </div>

@@ -10,18 +10,35 @@ import {
   DeleteTransaction,
   ListCategories,
 } from "@/core/usecases";
-import type { TransactionId, CategoryId, Transaction, Category } from "@/core/entities";
+import type {
+  TransactionId,
+  CategoryId,
+  Transaction,
+  Category,
+  TransactionFilters,
+} from "@/core/entities";
 
 type ActionResult<T = void> = { success: true; data: T } | { success: false; error: string };
 
-function repo() {
+function txRepo() {
   return new SupabaseTransactionRepository(createClient());
 }
 
-export async function listTransactionsAction(): Promise<ActionResult<Transaction[]>> {
+function catRepo() {
+  return new SupabaseCategoryRepository(createClient());
+}
+
+async function resolveTypeFromCategory(categoryId: string): Promise<"income" | "expense"> {
+  const cat = await catRepo().findById(categoryId as CategoryId);
+  if (!cat) throw new Error("Categoria não encontrada.");
+  return cat.type;
+}
+
+export async function listTransactionsAction(
+  filters?: TransactionFilters
+): Promise<ActionResult<Transaction[]>> {
   try {
-    const transactions = await new ListTransactions(repo()).execute();
-    return { success: true, data: transactions };
+    return { success: true, data: await new ListTransactions(txRepo()).execute(filters) };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }
@@ -31,10 +48,11 @@ export async function createTransactionAction(
   formData: Record<string, unknown>
 ): Promise<ActionResult<Transaction>> {
   try {
-    const transaction = await new CreateTransaction(repo()).execute({
+    const type = await resolveTypeFromCategory(formData.categoryId as string);
+    const transaction = await new CreateTransaction(txRepo()).execute({
       title: formData.title as string,
       amount: formData.amount as number,
-      type: formData.type as "income" | "expense",
+      type,
       categoryId: formData.categoryId as CategoryId,
       date: formData.date as string,
     });
@@ -51,10 +69,11 @@ export async function updateTransactionAction(
   formData: Record<string, unknown>
 ): Promise<ActionResult<Transaction>> {
   try {
-    const transaction = await new UpdateTransaction(repo()).execute(id as TransactionId, {
+    const type = await resolveTypeFromCategory(formData.categoryId as string);
+    const transaction = await new UpdateTransaction(txRepo()).execute(id as TransactionId, {
       title: formData.title as string,
       amount: formData.amount as number,
-      type: formData.type as "income" | "expense",
+      type,
       categoryId: formData.categoryId as CategoryId,
       date: formData.date as string,
     });
@@ -68,7 +87,7 @@ export async function updateTransactionAction(
 
 export async function deleteTransactionAction(id: string): Promise<ActionResult> {
   try {
-    await new DeleteTransaction(repo()).execute(id as TransactionId);
+    await new DeleteTransaction(txRepo()).execute(id as TransactionId);
     revalidatePath("/transactions");
     revalidatePath("/");
     return { success: true, data: undefined };
@@ -79,9 +98,7 @@ export async function deleteTransactionAction(id: string): Promise<ActionResult>
 
 export async function listCategoriesAction(): Promise<ActionResult<Category[]>> {
   try {
-    const supabase = createClient();
-    const categories = await new ListCategories(new SupabaseCategoryRepository(supabase)).execute();
-    return { success: true, data: categories };
+    return { success: true, data: await new ListCategories(catRepo()).execute() };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }

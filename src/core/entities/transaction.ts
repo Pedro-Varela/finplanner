@@ -28,3 +28,11 @@ export interface UpdateTransactionInput {
   categoryId?: CategoryId;
   date?: string;
 }
+
+export interface TransactionFilters {
+  search?: string;
+  categoryId?: CategoryId;
+  type?: TransactionType;
+  dateFrom?: string;
+  dateTo?: string;
+}

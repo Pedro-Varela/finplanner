@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import type { UserId } from "@/core/entities";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/components/providers/auth-provider";
+import { ThemeProvider } from "@/components/providers/theme-provider";
 import { createClient } from "@/lib/supabase/server";
 import "./globals.css";
 
@@ -54,12 +55,14 @@ export default async function RootLayout({
     : null;
 
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}>
-        <AuthProvider initialUser={initialUser}>
-          {children}
-          <Toaster richColors position="bottom-right" />
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider initialUser={initialUser}>
+            {children}
+            <Toaster richColors position="bottom-right" />
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

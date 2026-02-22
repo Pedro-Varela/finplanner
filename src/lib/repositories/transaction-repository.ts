@@ -7,6 +7,7 @@ import type {
   UserId,
   CreateTransactionInput,
   UpdateTransactionInput,
+  TransactionFilters,
 } from "@/core/entities";
 import type { TransactionRow } from "./database-types";
 import { RepositoryError } from "./errors";
@@ -37,11 +38,26 @@ export class SupabaseTransactionRepository implements TransactionRepository {
     return user.id;
   }
 
-  async findAll(): Promise<Transaction[]> {
-    const { data, error } = await this.client
-      .from(TABLE)
-      .select("*")
-      .order("date", { ascending: false });
+  async findAll(filters?: TransactionFilters): Promise<Transaction[]> {
+    let query = this.client.from(TABLE).select("*");
+
+    if (filters?.search) {
+      query = query.ilike("title", `%${filters.search}%`);
+    }
+    if (filters?.categoryId) {
+      query = query.eq("category_id", filters.categoryId);
+    }
+    if (filters?.type) {
+      query = query.eq("type", filters.type);
+    }
+    if (filters?.dateFrom) {
+      query = query.gte("date", filters.dateFrom);
+    }
+    if (filters?.dateTo) {
+      query = query.lte("date", filters.dateTo);
+    }
+
+    const { data, error } = await query.order("date", { ascending: false });
 
     if (error) {
       throw new RepositoryError(

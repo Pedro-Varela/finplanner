@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,10 +19,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import type { Transaction, Category } from "@/core/entities";
+import type { Transaction, Category, TransactionFilters } from "@/core/entities";
 import { listTransactionsAction, listCategoriesAction } from "../actions";
 import { TransactionForm } from "./transaction-form";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
+import { TransactionFiltersBar } from "./transaction-filters";
 
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
@@ -36,6 +37,7 @@ export function TransactionList() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, startTransition] = useTransition();
+  const filtersRef = useRef<TransactionFilters>({});
 
   const [formOpen, setFormOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
@@ -43,9 +45,12 @@ export function TransactionList() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
 
-  const load = useCallback(() => {
+  const load = useCallback((filters?: TransactionFilters) => {
     startTransition(async () => {
-      const [txRes, catRes] = await Promise.all([listTransactionsAction(), listCategoriesAction()]);
+      const [txRes, catRes] = await Promise.all([
+        listTransactionsAction(filters),
+        listCategoriesAction(),
+      ]);
       if (txRes.success) setTransactions(txRes.data);
       else toast.error(txRes.error);
 
@@ -59,6 +64,16 @@ export function TransactionList() {
 
   const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
+  function handleFiltersChange(filters: TransactionFilters) {
+    filtersRef.current = filters;
+    load(filters);
+  }
+
+  function handleNew() {
+    setEditingTx(null);
+    setFormOpen(true);
+  }
+
   function handleEdit(tx: Transaction) {
     setEditingTx(tx);
     setFormOpen(true);
@@ -67,11 +82,6 @@ export function TransactionList() {
   function handleDelete(tx: Transaction) {
     setDeletingTx(tx);
     setDeleteOpen(true);
-  }
-
-  function handleNew() {
-    setEditingTx(null);
-    setFormOpen(true);
   }
 
   return (
@@ -86,6 +96,8 @@ export function TransactionList() {
           Nova transação
         </Button>
       </div>
+
+      <TransactionFiltersBar categories={categories} onFiltersChange={handleFiltersChange} />
 
       <div className="rounded-md border">
         <Table>
@@ -136,8 +148,7 @@ export function TransactionList() {
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <span className="sr-only">Ações</span>
-                            ···
+                            <span className="sr-only">Ações</span>···
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
@@ -162,14 +173,14 @@ export function TransactionList() {
       <TransactionForm
         open={formOpen}
         onOpenChange={setFormOpen}
-        onSuccess={load}
+        onSuccess={() => load(filtersRef.current)}
         transaction={editingTx}
       />
 
       <DeleteTransactionDialog
         open={deleteOpen}
         onOpenChange={setDeleteOpen}
-        onSuccess={load}
+        onSuccess={() => load(filtersRef.current)}
         transaction={deletingTx}
       />
     </div>
