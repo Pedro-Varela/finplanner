@@ -16,7 +16,7 @@ export interface Category {
 // ---------------------------------------------------------------------------
 // DTOs — contratos de entrada
 // ---------------------------------------------------------------------------
-
+// as
 export interface CreateCategoryInput {
   name: string;
   color: string;
