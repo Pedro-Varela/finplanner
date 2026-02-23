@@ -21,7 +21,7 @@ export interface GenerateInsightsDependencies {
 }
 
 export class GenerateInsights {
-  constructor(private deps: GenerateInsightsDependencies) { }
+  constructor(private deps: GenerateInsightsDependencies) {}
 
   async execute(): Promise<void> {
     // 1. Fetch data
