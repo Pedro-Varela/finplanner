@@ -2,17 +2,15 @@ import type { CreateInsightInput } from "../entities";
 import type { CategoryRepository } from "./category-usecases";
 import type { RecurringTransactionRepository } from "./recurring-usecases";
 import type { TransactionRepository } from "./transaction-usecases";
-import {
-  calculateEnvelopeStatus,
-  calculateFinancialScore,
-  generateFinancialSnapshot,
-  generateStrategicInsights,
-  type EnvelopeConfig,
-  type EnvelopeStatus,
-  type FinancialScore,
-  type FinancialSnapshot,
-  type StrategicInsight,
-} from "../financial-intelligence";
+import { calculateEnvelopeStatus } from "../financial-intelligence/envelope/calculateEnvelopeStatus";
+import { generateStrategicInsights } from "../financial-intelligence/insights/generateStrategicInsights";
+import { calculateFinancialScore } from "../financial-intelligence/score/calculateFinancialScore";
+import { generateFinancialSnapshot } from "../financial-intelligence/snapshot/generateFinancialSnapshot";
+import type { EnvelopeStatus } from "../financial-intelligence/types";
+import type { EnvelopeConfig } from "../financial-intelligence/types";
+import type { FinancialScore } from "../financial-intelligence/types";
+import type { FinancialSnapshot } from "../financial-intelligence/types";
+import type { StrategicInsight } from "../financial-intelligence/types";
 
 export interface FinancialIntelligencePersistenceRepository {
   findActiveInsightTitles(): Promise<Set<string>>;
