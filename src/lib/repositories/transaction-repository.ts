@@ -25,6 +25,7 @@ function toEntity(row: TransactionRow): Transaction {
     categoryId: row.category_id as CategoryId,
     date: row.date,
     createdAt: row.created_at,
+    normalizedMerchant: row.normalized_merchant,
   };
 }
 
@@ -95,6 +96,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         category_id: input.categoryId,
         date: input.date,
         user_id: userId,
+        normalized_merchant: input.normalizedMerchant,
       })
       .select()
       .single();
@@ -116,6 +118,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
     if (input.type !== undefined) row.type = input.type;
     if (input.categoryId !== undefined) row.category_id = input.categoryId;
     if (input.date !== undefined) row.date = input.date;
+    if (input.normalizedMerchant !== undefined) row.normalized_merchant = input.normalizedMerchant;
 
     const { data, error } = await this.client
       .from(TABLE)
@@ -181,6 +184,7 @@ export class SupabaseTransactionRepository implements TransactionRepository {
       date: item.date,
       source: item.source,
       imported_hash: item.importedHash,
+      normalized_merchant: item.normalizedMerchant,
     }));
 
     const { data, error } = await this.client.from(TABLE).insert(rows).select("id");

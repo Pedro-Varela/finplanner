@@ -9,6 +9,7 @@ export interface TransactionRow {
   created_at: string;
   source?: "manual" | "import_csv";
   imported_hash?: string | null;
+  normalized_merchant?: string | null;
 }
 
 export interface MerchantRuleRow {

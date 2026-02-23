@@ -11,6 +11,7 @@ export interface Transaction {
   categoryId: CategoryId;
   date: string;
   createdAt: string;
+  normalizedMerchant?: string | null;
 }
 
 export interface CreateTransactionInput {
@@ -19,6 +20,7 @@ export interface CreateTransactionInput {
   type: TransactionType;
   categoryId: CategoryId;
   date: string;
+  normalizedMerchant?: string | null;
 }
 
 export interface UpdateTransactionInput {
@@ -27,6 +29,7 @@ export interface UpdateTransactionInput {
   type?: TransactionType;
   categoryId?: CategoryId;
   date?: string;
+  normalizedMerchant?: string | null;
 }
 
 export interface TransactionFilters {

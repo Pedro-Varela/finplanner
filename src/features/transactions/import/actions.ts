@@ -16,7 +16,8 @@ export interface PreviewRule {
 }
 
 export async function importNubankCsvAction(
-  csvContent: string
+  csvContent: string,
+  sourceType: "bank_account" | "credit_card"
 ): Promise<ActionResult<ImportResult>> {
   try {
     const client = createClient();
@@ -24,7 +25,7 @@ export async function importNubankCsvAction(
     const ruleRepo = new SupabaseMerchantRuleRepository(client);
 
     const useCase = new ImportNubankCsvTransactions(txRepo, ruleRepo);
-    const result = await useCase.execute(csvContent);
+    const result = await useCase.execute(csvContent, sourceType);
 
     revalidatePath("/transactions");
     revalidatePath("/");

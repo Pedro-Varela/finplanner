@@ -1,8 +1,15 @@
-import type { CategoryId, BulkTransactionInput, ImportResult, MerchantRule } from "../entities";
+import type {
+  CategoryId,
+  BulkTransactionInput,
+  ImportResult,
+  MerchantRule,
+  Transaction,
+} from "../entities";
+import type { TransactionRepository } from "./transaction-usecases";
 import type { RuleInput } from "@/lib/categorization/apply-rules";
 import { importNubankCsv } from "@/lib/importers";
 import { extractMerchantBase } from "@/lib/categorization";
-import { applyRules } from "@/lib/categorization";
+import { applyRules, matchesRule } from "@/lib/categorization";
 
 // ---------------------------------------------------------------------------
 // Hash determinístico (sem dependência de crypto externo)
@@ -45,7 +52,10 @@ export class ImportNubankCsvTransactions {
     private ruleRepo: ImportMerchantRuleRepository
   ) {}
 
-  async execute(csvContent: string): Promise<ImportResult> {
+  async execute(
+    csvContent: string,
+    sourceType: "bank_account" | "credit_card"
+  ): Promise<ImportResult> {
     const { rows: parsedRows, errors: parseErrors } = importNubankCsv(csvContent);
 
     if (parsedRows.length === 0) {
@@ -61,8 +71,19 @@ export class ImportNubankCsvTransactions {
     const enriched = parsedRows.map((row) => {
       const merchantBase = extractMerchantBase(row.description);
       const hash = generateImportHash(row.date, row.amount, merchantBase);
-      const type = row.amount < 0 ? "expense" : "income";
-      return { ...row, merchantBase, hash, type: type as "income" | "expense" };
+
+      let type: "income" | "expense";
+      let amount: number;
+
+      if (sourceType === "credit_card") {
+        type = "expense";
+        amount = Math.abs(row.amount);
+      } else {
+        type = row.amount < 0 ? "expense" : "income";
+        amount = Math.abs(row.amount);
+      }
+
+      return { ...row, merchantBase, hash, type, amount };
     });
 
     // Deduplicar contra o banco
@@ -97,12 +118,13 @@ export class ImportNubankCsvTransactions {
 
       return {
         title: row.description,
-        amount: Math.abs(row.amount),
+        amount: row.amount,
         type: row.type,
         categoryId: (catId as CategoryId) ?? (null as unknown as CategoryId),
         date: row.date,
         source: "import_csv" as const,
         importedHash: row.hash,
+        normalizedMerchant: row.merchantBase,
       };
     });
 
@@ -131,18 +153,48 @@ export interface CreateRuleRepository {
 }
 
 export class CreateMerchantRuleFromTransaction {
-  constructor(private ruleRepo: CreateRuleRepository) {}
+  constructor(
+    private ruleRepo: CreateRuleRepository,
+    private txRepo?: TransactionRepository
+  ) {}
 
   async execute(merchantBase: string, categoryId: CategoryId): Promise<MerchantRule> {
     if (!merchantBase.trim()) {
       throw new Error("O merchant base é obrigatório.");
     }
 
-    return this.ruleRepo.create({
+    const rule = await this.ruleRepo.create({
       pattern: merchantBase.toUpperCase(),
       matchType: "contains",
       categoryId,
       priority: 10,
     });
+
+    if (this.txRepo) {
+      // Find all transactions and filter uncategorized ones
+      // Using findAll empty filters and filtering in memory because we don't have a specific findUncategorized
+      const allTx = await this.txRepo.findAll();
+      const uncategorized = allTx.filter(
+        (tx: Transaction) => !tx.categoryId && tx.normalizedMerchant
+      );
+
+      const toUpdate = uncategorized.filter((tx: Transaction) =>
+        matchesRule(tx.normalizedMerchant!, {
+          pattern: rule.pattern,
+          matchType: rule.matchType,
+        })
+      );
+
+      // Update matching transactions in parallel
+      await Promise.all(
+        toUpdate.map((tx: Transaction) =>
+          this.txRepo!.update(tx.id, {
+            categoryId: rule.categoryId as CategoryId,
+          })
+        )
+      );
+    }
+
+    return rule;
   }
 }

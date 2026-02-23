@@ -21,6 +21,7 @@ type PageState = "idle" | "preview" | "importing" | "result";
 
 export function CsvImportPage() {
   const [state, setState] = useState<PageState>("idle");
+  const [sourceType, setSourceType] = useState<"bank_account" | "credit_card">("bank_account");
   const [csvContent, setCsvContent] = useState<string>("");
   const [parsedRows, setParsedRows] = useState<ImportedRow[]>([]);
   const [parseErrors, setParseErrors] = useState<{ line: number; reason: string }[]>([]);
@@ -68,7 +69,7 @@ export function CsvImportPage() {
   const handleImport = useCallback(() => {
     setState("importing");
     startTransition(async () => {
-      const result = await importNubankCsvAction(csvContent);
+      const result = await importNubankCsvAction(csvContent, sourceType);
 
       if (!result.success) {
         toast.error(result.error);
@@ -79,11 +80,12 @@ export function CsvImportPage() {
       setImportResult(result.data);
       setState("result");
     });
-  }, [csvContent]);
+  }, [csvContent, sourceType]);
 
   const handleReset = useCallback(() => {
     setState("idle");
     setCsvContent("");
+    setSourceType("bank_account");
     setParsedRows([]);
     setParseErrors([]);
     setRules([]);
@@ -116,29 +118,62 @@ export function CsvImportPage() {
       {(state === "preview" || state === "importing") && (
         <div className="space-y-4">
           <CsvPreviewTable
-            rows={parsedRows}
+            rows={parsedRows.map((r) => {
+              if (sourceType === "credit_card") return { ...r, amount: Math.abs(r.amount) };
+              return { ...r, amount: Math.abs(r.amount) };
+            })}
             rules={rules}
             categories={categories}
             parseErrors={parseErrors}
           />
 
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={handleReset} disabled={state === "importing"}>
-              Cancelar
-            </Button>
-            <Button className="gap-2" onClick={handleImport} disabled={state === "importing"}>
-              {state === "importing" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Importando…
-                </>
-              ) : (
-                <>
-                  <FileUp className="h-4 w-4" />
-                  Importar {parsedRows.length} transações
-                </>
-              )}
-            </Button>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3 rounded-md border p-2">
+              <span className="text-sm font-medium">Origem:</span>
+              <label className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="radio"
+                  name="sourceType"
+                  value="bank_account"
+                  checked={sourceType === "bank_account"}
+                  onChange={() => setSourceType("bank_account")}
+                  disabled={state === "importing"}
+                  className="accent-primary"
+                />
+                Conta Corrente
+              </label>
+              <label className="flex items-center gap-1.5 text-sm">
+                <input
+                  type="radio"
+                  name="sourceType"
+                  value="credit_card"
+                  checked={sourceType === "credit_card"}
+                  onChange={() => setSourceType("credit_card")}
+                  disabled={state === "importing"}
+                  className="accent-primary"
+                />
+                Cartão de Crédito
+              </label>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={handleReset} disabled={state === "importing"}>
+                Cancelar
+              </Button>
+              <Button className="gap-2" onClick={handleImport} disabled={state === "importing"}>
+                {state === "importing" ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Importando…
+                  </>
+                ) : (
+                  <>
+                    <FileUp className="h-4 w-4" />
+                    Importar {parsedRows.length} transações
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
         </div>
       )}

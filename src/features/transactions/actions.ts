@@ -132,7 +132,8 @@ export async function categorizeTransactionAction(
       const merchantBase = extractMerchantBase(transaction.title);
       if (merchantBase) {
         const ruleRepo = new SupabaseMerchantRuleRepository(client);
-        await new CreateMerchantRuleFromTransaction(ruleRepo).execute(
+        const ruleTxRepo = new SupabaseTransactionRepository(client);
+        await new CreateMerchantRuleFromTransaction(ruleRepo, ruleTxRepo).execute(
           merchantBase,
           categoryId as CategoryId
         );

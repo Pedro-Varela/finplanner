@@ -9,6 +9,7 @@ export interface BulkTransactionInput {
   date: string;
   source: "import_csv";
   importedHash: string;
+  normalizedMerchant?: string;
 }
 
 export interface ImportResult {

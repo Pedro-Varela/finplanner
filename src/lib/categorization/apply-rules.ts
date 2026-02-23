@@ -7,6 +7,31 @@ export interface RuleInput {
   priority: number;
 }
 
+export function matchesRule(
+  merchantNormalized: string,
+  rule: Omit<RuleInput, "categoryId" | "priority">
+): boolean {
+  if (!merchantNormalized) return false;
+
+  const upper = merchantNormalized.toUpperCase();
+  const pattern = rule.pattern.toUpperCase();
+
+  switch (rule.matchType) {
+    case "equals":
+      return upper === pattern;
+    case "contains":
+      return upper.includes(pattern);
+    case "regex":
+      try {
+        return new RegExp(rule.pattern, "i").test(merchantNormalized);
+      } catch {
+        return false;
+      }
+    default:
+      return false;
+  }
+}
+
 /**
  * Aplica regras de categorização a um merchant normalizado.
  * Regras são avaliadas por ordem de prioridade (ASC = maior prioridade primeiro).
@@ -17,30 +42,8 @@ export function applyRules(merchantNormalized: string, rules: RuleInput[]): stri
 
   const sorted = [...rules].sort((a, b) => a.priority - b.priority);
 
-  const upper = merchantNormalized.toUpperCase();
-
   for (const rule of sorted) {
-    const pattern = rule.pattern.toUpperCase();
-
-    let matched = false;
-
-    switch (rule.matchType) {
-      case "equals":
-        matched = upper === pattern;
-        break;
-      case "contains":
-        matched = upper.includes(pattern);
-        break;
-      case "regex":
-        try {
-          matched = new RegExp(rule.pattern, "i").test(merchantNormalized);
-        } catch {
-          matched = false;
-        }
-        break;
-    }
-
-    if (matched && rule.categoryId) {
+    if (matchesRule(merchantNormalized, rule) && rule.categoryId) {
       return rule.categoryId;
     }
   }
