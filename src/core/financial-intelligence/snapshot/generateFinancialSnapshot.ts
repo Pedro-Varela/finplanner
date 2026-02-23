@@ -9,58 +9,10 @@ import type {
   FinancialTopCategory,
   GenerateFinancialSnapshotOptions,
 } from "../types";
-
-const ESSENTIAL_KEYWORDS = [
-  "aluguel",
-  "renda",
-  "moradia",
-  "condominio",
-  "água",
-  "agua",
-  "luz",
-  "energia",
-  "internet",
-  "telefone",
-  "mercado",
-  "supermercado",
-  "farmacia",
-  "farmácia",
-  "saude",
-  "saúde",
-  "transporte",
-  "combustivel",
-  "combustível",
-  "gasolina",
-  "seguro",
-  "escola",
-  "educacao",
-  "educação",
-  "imposto",
-];
-
-const INVESTMENT_KEYWORDS = [
-  "invest",
-  "reserva",
-  "aposentadoria",
-  "previdencia",
-  "previdência",
-  "tesouro",
-  "cdb",
-  "fii",
-  "acoes",
-  "ações",
-  "cript",
-];
+import { resolveCategoryBucket } from "./bucket-rules";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
-}
-
-function normalize(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase();
 }
 
 function monthToRef(date: Date): string {
@@ -107,20 +59,6 @@ function recurringToMonthlyAmount(amount: number, frequency: RecurringFrequency)
   if (frequency === "weekly") return amount * (52 / 12);
   if (frequency === "yearly") return amount / 12;
   return amount;
-}
-
-function detectBucket(categoryName: string): "essential" | "leisure" | "investment" {
-  const name = normalize(categoryName);
-
-  if (INVESTMENT_KEYWORDS.some((keyword) => name.includes(keyword))) {
-    return "investment";
-  }
-
-  if (ESSENTIAL_KEYWORDS.some((keyword) => name.includes(keyword))) {
-    return "essential";
-  }
-
-  return "leisure";
 }
 
 function buildTopCategories(
@@ -188,7 +126,7 @@ export function generateFinancialSnapshot(
   for (const transaction of expenseTransactions) {
     const category = categoryById.get(String(transaction.categoryId));
     const categoryName = category?.name ?? "Categoria desconhecida";
-    const bucket = detectBucket(categoryName);
+    const bucket = resolveCategoryBucket(categoryName);
 
     if (bucket === "essential") essentialExpense += transaction.amount;
     if (bucket === "leisure") leisureExpense += transaction.amount;

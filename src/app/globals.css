@@ -6,6 +6,34 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  .animate-in-up {
+    animation: enter-up 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-in-fade {
+    animation: enter-fade 420ms ease both;
+  }
+
+  .animate-stagger > * {
+    animation: enter-up 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .animate-stagger > *:nth-child(1) {
+    animation-delay: 40ms;
+  }
+
+  .animate-stagger > *:nth-child(2) {
+    animation-delay: 90ms;
+  }
+
+  .animate-stagger > *:nth-child(3) {
+    animation-delay: 140ms;
+  }
+
+  .animate-stagger > *:nth-child(4) {
+    animation-delay: 190ms;
+  }
 }
 
 @layer base {
@@ -61,5 +89,84 @@
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 0% 0%, hsl(198 90% 96%) 0%, transparent 38%),
+      radial-gradient(circle at 100% 0%, hsl(155 50% 95%) 0%, transparent 42%);
+    background-attachment: fixed;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(circle at 0% 0%, hsl(204 35% 16%) 0%, transparent 42%),
+      radial-gradient(circle at 100% 0%, hsl(164 38% 15%) 0%, transparent 48%);
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.18);
+  }
+
+  a,
+  button,
+  input,
+  textarea,
+  select {
+    transition:
+      background-color 180ms ease,
+      border-color 180ms ease,
+      color 180ms ease,
+      box-shadow 180ms ease,
+      transform 180ms ease;
+  }
+}
+
+@layer components {
+  .app-shell {
+    position: relative;
+  }
+
+  .app-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to bottom, hsl(var(--foreground) / 0.03) 1px, transparent 1px),
+      linear-gradient(to right, hsl(var(--foreground) / 0.03) 1px, transparent 1px);
+    background-size: 28px 28px;
+    mask-image: radial-gradient(circle at 35% 0%, black 15%, transparent 80%);
+    opacity: 0.35;
+  }
+}
+
+@keyframes enter-up {
+  0% {
+    opacity: 0;
+    transform: translateY(14px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes enter-fade {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
   }
 }

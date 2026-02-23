@@ -17,7 +17,9 @@ import {
 import { toast } from "sonner";
 import {
   calculateEnvelopeStatus,
+  ESSENTIAL_CATEGORY_KEYWORDS,
   generateStrategicInsights,
+  INVESTMENT_CATEGORY_KEYWORDS,
   type EnvelopeConfig,
   type EnvelopeStatus,
   type FinancialScore,
@@ -251,6 +253,65 @@ function StatusGuideCard() {
           <p className="mt-2 text-sm text-rose-700">
             Desalinhamento forte. Ocorre quando 2+ blocos passam muito da meta, ou 1 bloco excede
             bastante.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function CategoryClassificationCard() {
+  const essentialExamples = ESSENTIAL_CATEGORY_KEYWORDS.slice(0, 8);
+  const investmentExamples = INVESTMENT_CATEGORY_KEYWORDS.slice(0, 8);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Como o engine classifica os gastos</CardTitle>
+        <CardDescription>
+          Classificação por palavras-chave no nome da categoria, sem IA e 100% determinística.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
+          <p className="font-semibold text-sky-700">Essenciais</p>
+          <p className="mt-1 text-sm text-sky-700">
+            Moradia, contas básicas, alimentação, saúde, transporte, educação e impostos.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {essentialExamples.map((keyword) => (
+              <Badge key={keyword} variant="outline" className="border-sky-300 text-sky-700">
+                {keyword}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+          <p className="font-semibold text-emerald-700">Investimentos</p>
+          <p className="mt-1 text-sm text-emerald-700">
+            Aportes financeiros e construção de patrimônio.
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {investmentExamples.map((keyword) => (
+              <Badge
+                key={keyword}
+                variant="outline"
+                className="border-emerald-300 text-emerald-700"
+              >
+                {keyword}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
+          <p className="font-semibold text-violet-700">Estilo de vida</p>
+          <p className="mt-1 text-sm text-violet-700">
+            Tudo que não bate com regras de Essenciais ou Investimentos cai aqui por padrão.
+          </p>
+          <p className="mt-1 text-xs text-violet-700/90">
+            Exemplo comum: lazer, restaurantes, compras e entretenimento.
           </p>
         </div>
       </CardContent>
@@ -532,6 +593,8 @@ export function FinancialScoreDashboard() {
 
         <StatusGuideCard />
       </div>
+
+      <CategoryClassificationCard />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>

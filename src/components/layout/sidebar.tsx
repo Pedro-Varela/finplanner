@@ -32,7 +32,7 @@ export function Sidebar() {
   const { user } = useAuth();
 
   return (
-    <aside className="hidden md:flex md:w-64 md:flex-col md:border-r bg-card">
+    <aside className="hidden border-r border-border/70 bg-card/75 backdrop-blur-xl md:flex md:w-64 md:flex-col">
       <div className="flex h-16 items-center gap-2 px-6 font-bold text-xl">
         <span className="text-primary">Fin</span>Planner
       </div>
