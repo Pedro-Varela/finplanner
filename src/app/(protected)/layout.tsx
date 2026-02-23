@@ -1,5 +1,6 @@
 import { Sidebar } from "@/components/layout";
 import { Header } from "@/components/layout";
+import { InsightsTrigger } from "@/features/insights/components/insights-trigger";
 
 export default function ProtectedLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -9,6 +10,7 @@ export default function ProtectedLayout({ children }: { children: React.ReactNod
         <Header />
         <main className="flex-1 overflow-y-auto p-6">{children}</main>
       </div>
+      <InsightsTrigger />
     </div>
   );
 }

@@ -51,4 +51,13 @@ export type {
 } from "./import-usecases";
 export { ImportNubankCsvTransactions, CreateMerchantRuleFromTransaction } from "./import-usecases";
 
+export type { ProjectionsData, CategoryTrend } from "./projections-usecases";
+export { GetProjections } from "./projections-usecases";
+
+export type { InsightRepository, GenerateInsightsDependencies } from "./insight-usecases";
+export { GenerateInsights } from "./insight-usecases";
+
+export type { GetFinancialForecastDependencies } from "./forecast-usecases";
+export { GetFinancialForecast } from "./forecast-usecases";
+
 export { ValidationError } from "../errors";

@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/providers/auth-provider";
 import { LogoutButton } from "@/features/auth";
 import { ThemeToggle } from "./theme-toggle";
+import { NotificationsBell } from "@/features/insights/components/notifications-bell";
 
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -70,6 +71,8 @@ export function Header() {
       </Sheet>
 
       <div className="flex-1" />
+
+      {user && <NotificationsBell />}
 
       <ThemeToggle />
 

@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Menu,
   LayoutDashboard,
   ArrowLeftRight,
   Tag,
   PiggyBank,
   Landmark,
   Repeat,
+  LineChart,
   UserCircle,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -20,6 +23,8 @@ import { LogoutButton } from "@/features/auth";
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Transações", href: "/transactions", icon: ArrowLeftRight },
+  { label: "Projeções", href: "/projections", icon: TrendingUp },
+  { label: "Forecast", href: "/forecast", icon: LineChart },
   { label: "Categorias", href: "/categories", icon: Tag },
   { label: "Orçamentos", href: "/budgets", icon: PiggyBank },
   { label: "Contas", href: "/accounts", icon: Landmark },

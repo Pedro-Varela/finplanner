@@ -60,3 +60,14 @@ export interface BudgetRow {
   year: number;
   created_at: string;
 }
+
+export interface InsightRow {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  type: "warning" | "suggestion" | "info";
+  status: "active" | "resolved";
+  created_at: string;
+  resolved_at: string | null;
+}

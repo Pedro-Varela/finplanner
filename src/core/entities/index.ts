@@ -44,3 +44,20 @@ export type {
 } from "./merchant-rule";
 
 export type { BulkTransactionInput, ImportResult } from "./import-types";
+
+export type {
+  InsightId,
+  InsightType,
+  InsightStatus,
+  Insight,
+  CreateInsightInput,
+  UpdateInsightInput,
+} from "./insight";
+
+export type {
+  ForecastScenarioType,
+  MonthlyForecast,
+  ForecastData,
+} from "./forecast";
+
+
