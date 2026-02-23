@@ -1,4 +1,10 @@
-import type { Category, CategoryId, CreateCategoryInput, UpdateCategoryInput } from "../entities";
+import {
+  CATEGORY_ICON_OPTIONS,
+  type Category,
+  type CategoryId,
+  type CreateCategoryInput,
+  type UpdateCategoryInput,
+} from "../entities";
 import { ValidationError } from "../errors";
 
 export interface CategoryRepository {
@@ -18,6 +24,14 @@ function validateName(name: string) {
   }
 }
 
+function validateIcon(icon: string | undefined) {
+  if (icon === undefined) return;
+
+  if (!CATEGORY_ICON_OPTIONS.includes(icon as (typeof CATEGORY_ICON_OPTIONS)[number])) {
+    throw new ValidationError("O ícone selecionado é inválido.", "icon");
+  }
+}
+
 export class ListCategories {
   constructor(private repository: CategoryRepository) {}
 
@@ -31,6 +45,7 @@ export class CreateCategory {
 
   async execute(data: CreateCategoryInput): Promise<Category> {
     validateName(data.name);
+    validateIcon(data.icon);
     return this.repository.create(data);
   }
 }
@@ -40,6 +55,7 @@ export class UpdateCategory {
 
   async execute(id: CategoryId, data: UpdateCategoryInput): Promise<Category> {
     if (data.name !== undefined) validateName(data.name);
+    validateIcon(data.icon);
 
     const hasFields = Object.values(data).some((v) => v !== undefined);
     if (!hasFields) {

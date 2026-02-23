@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Category, TransactionFilters } from "@/core/entities";
+import { getCategoryIconDefinition } from "@/lib/category-icons";
 
 interface TransactionFiltersBarProps {
   categories: Category[];
@@ -81,11 +82,20 @@ export function TransactionFiltersBar({ categories, onFiltersChange }: Transacti
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todas</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat.id} value={cat.id}>
-                {cat.name}
-              </SelectItem>
-            ))}
+            {categories.map((cat) => {
+              const iconDefinition = getCategoryIconDefinition(cat.icon);
+              const Icon = iconDefinition.Icon;
+              return (
+                <SelectItem key={cat.id} value={cat.id}>
+                  <span className="flex items-center gap-2">
+                    <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-muted">
+                      <Icon className="h-3.5 w-3.5" />
+                    </span>
+                    {cat.name}
+                  </span>
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
       </div>

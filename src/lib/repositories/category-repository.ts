@@ -7,6 +7,7 @@ import type {
   CreateCategoryInput,
   UpdateCategoryInput,
 } from "@/core/entities";
+import { normalizeCategoryIcon } from "@/core/entities";
 import type { CategoryRow } from "./database-types";
 import { RepositoryError } from "./errors";
 
@@ -18,6 +19,7 @@ function toEntity(row: CategoryRow): Category {
     userId: row.user_id as UserId,
     name: row.name,
     type: row.type,
+    icon: normalizeCategoryIcon(row.icon),
     createdAt: row.created_at,
   };
 }
@@ -70,6 +72,7 @@ export class SupabaseCategoryRepository implements CategoryRepository {
       .insert({
         name: input.name,
         type: input.type,
+        icon: input.icon,
         user_id: userId,
       })
       .select()
@@ -89,6 +92,7 @@ export class SupabaseCategoryRepository implements CategoryRepository {
     const row: Record<string, unknown> = {};
     if (input.name !== undefined) row.name = input.name;
     if (input.type !== undefined) row.type = input.type;
+    if (input.icon !== undefined) row.icon = input.icon;
 
     const { data, error } = await this.client
       .from(TABLE)

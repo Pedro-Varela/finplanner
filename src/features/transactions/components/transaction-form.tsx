@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Transaction, Category } from "@/core/entities";
+import { getCategoryIconDefinition } from "@/lib/category-icons";
 import { transactionSchema, type TransactionFormValues } from "../schemas";
 import { createTransactionAction, updateTransactionAction, listCategoriesAction } from "../actions";
 
@@ -82,6 +83,10 @@ export function TransactionForm({
 
   const selectedCategoryId = form.watch("categoryId");
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
+  const selectedCategoryIcon = selectedCategory
+    ? getCategoryIconDefinition(selectedCategory.icon)
+    : null;
+  const SelectedCategoryIcon = selectedCategoryIcon?.Icon;
 
   function onSubmit(values: TransactionFormValues) {
     startTransition(async () => {
@@ -173,23 +178,32 @@ export function TransactionForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat.id} value={cat.id}>
-                          <span className="flex items-center gap-2">
-                            {cat.name}
-                            <Badge
-                              variant="outline"
-                              className={`text-xs ${cat.type === "income" ? "text-emerald-600 border-emerald-300" : "text-red-500 border-red-300"}`}
-                            >
-                              {cat.type === "income" ? "Receita" : "Despesa"}
-                            </Badge>
-                          </span>
-                        </SelectItem>
-                      ))}
+                      {categories.map((cat) => {
+                        const iconDefinition = getCategoryIconDefinition(cat.icon);
+                        const Icon = iconDefinition.Icon;
+
+                        return (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            <span className="flex items-center gap-2">
+                              <span className="inline-flex h-5 w-5 items-center justify-center rounded bg-muted">
+                                <Icon className="h-3.5 w-3.5" />
+                              </span>
+                              {cat.name}
+                              <Badge
+                                variant="outline"
+                                className={`text-xs ${cat.type === "income" ? "text-emerald-600 border-emerald-300" : "text-red-500 border-red-300"}`}
+                              >
+                                {cat.type === "income" ? "Receita" : "Despesa"}
+                              </Badge>
+                            </span>
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
-                  {selectedCategory && (
+                  {selectedCategory && SelectedCategoryIcon && (
                     <p className="text-xs text-muted-foreground">
+                      <SelectedCategoryIcon className="mr-1 inline h-3.5 w-3.5 align-text-bottom" />
                       Tipo:{" "}
                       <span
                         className={

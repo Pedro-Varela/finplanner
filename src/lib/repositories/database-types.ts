@@ -27,6 +27,7 @@ export interface CategoryRow {
   user_id: string;
   name: string;
   type: "income" | "expense";
+  icon?: string | null;
   created_at: string;
 }
 

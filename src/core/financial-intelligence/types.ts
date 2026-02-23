@@ -3,6 +3,7 @@ import type { Category, RecurringTransaction, Transaction } from "@/core/entitie
 export interface FinancialTopCategory {
   categoryId: string;
   categoryName: string;
+  categoryIcon: string;
   amount: number;
   percentage: number;
 }

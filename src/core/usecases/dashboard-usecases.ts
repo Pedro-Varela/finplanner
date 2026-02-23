@@ -1,4 +1,5 @@
 import type { Transaction, Category } from "../entities";
+import { resolveCategoryFamily, type CategoryFamily } from "../categories/category-taxonomy";
 import type { TransactionRepository } from "./transaction-usecases";
 import type { CategoryRepository } from "./category-usecases";
 
@@ -23,15 +24,36 @@ export interface MonthlyDataPoint {
 export interface CategoryBreakdown {
   categoryId: string;
   categoryName: string;
+  categoryIcon: string;
+  categoryFamily: CategoryFamily;
   type: "income" | "expense";
   total: number;
 }
 
+export interface CategoryHeatmapPoint {
+  day: number;
+  amount: number;
+}
+
+export interface CategoryHeatmapSeries {
+  categoryId: string;
+  categoryName: string;
+  categoryIcon: string;
+  categoryFamily: CategoryFamily;
+  total: number;
+  peakDay: number | null;
+  peakAmount: number;
+  daily: CategoryHeatmapPoint[];
+}
+
 export interface DashboardData {
+  currentMonthRef: string;
+  daysInCurrentMonth: number;
   summary: DashboardSummary;
   previousMonthSummary: DashboardSummary;
   monthly: MonthlyDataPoint[];
   byCategory: CategoryBreakdown[];
+  categoryHeatmap: CategoryHeatmapSeries[];
   recentTransactions: Transaction[];
 }
 
@@ -59,6 +81,8 @@ export class GetDashboardSummary {
       const d = new Date(tx.date + "T00:00:00");
       return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
     });
+    const currentMonthRef = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}`;
+    const daysInCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
     const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
@@ -70,10 +94,13 @@ export class GetDashboardSummary {
     const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
     return {
+      currentMonthRef,
+      daysInCurrentMonth,
       summary: computeSummary(currentMonthTxs),
       previousMonthSummary: computeSummary(prevMonthTxs),
       monthly: computeMonthlyData(transactions),
       byCategory: computeCategoryBreakdown(currentMonthTxs, categoryMap),
+      categoryHeatmap: computeCategoryHeatmap(currentMonthTxs, categoryMap, daysInCurrentMonth),
       recentTransactions: transactions.slice(0, 5),
     };
   }
@@ -153,12 +180,61 @@ export function computeCategoryBreakdown(
       entry = {
         categoryId: tx.categoryId,
         categoryName: cat?.name ?? "Sem categoria",
+        categoryIcon: cat?.icon ?? "tag",
+        categoryFamily: resolveCategoryFamily({
+          name: cat?.name ?? "Sem categoria",
+          icon: cat?.icon,
+        }),
         type: tx.type,
         total: 0,
       };
       map.set(tx.categoryId, entry);
     }
     entry.total += tx.amount;
+  }
+
+  return Array.from(map.values()).sort((a, b) => b.total - a.total);
+}
+
+export function computeCategoryHeatmap(
+  transactions: Transaction[],
+  categoryMap: Map<string, Category>,
+  daysInMonth: number
+): CategoryHeatmapSeries[] {
+  const map = new Map<string, CategoryHeatmapSeries>();
+
+  for (const tx of transactions) {
+    if (tx.type !== "expense") continue;
+
+    const day = Number(tx.date.slice(8, 10));
+    if (!Number.isFinite(day) || day < 1 || day > daysInMonth) continue;
+
+    let entry = map.get(tx.categoryId);
+    if (!entry) {
+      const cat = categoryMap.get(tx.categoryId);
+      entry = {
+        categoryId: tx.categoryId,
+        categoryName: cat?.name ?? "Sem categoria",
+        categoryIcon: cat?.icon ?? "tag",
+        categoryFamily: resolveCategoryFamily({
+          name: cat?.name ?? "Sem categoria",
+          icon: cat?.icon,
+        }),
+        total: 0,
+        peakDay: null,
+        peakAmount: 0,
+        daily: Array.from({ length: daysInMonth }, (_, idx) => ({ day: idx + 1, amount: 0 })),
+      };
+      map.set(tx.categoryId, entry);
+    }
+
+    entry.total += tx.amount;
+    const point = entry.daily[day - 1];
+    point.amount += tx.amount;
+    if (point.amount > entry.peakAmount) {
+      entry.peakAmount = point.amount;
+      entry.peakDay = day;
+    }
   }
 
   return Array.from(map.values()).sort((a, b) => b.total - a.total);

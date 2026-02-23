@@ -19,8 +19,14 @@ export type {
   MonthlyDataPoint,
   DashboardData,
   CategoryBreakdown,
+  CategoryHeatmapSeries,
 } from "./dashboard-usecases";
-export { GetDashboardSummary, computeSummary, computeMonthlyData } from "./dashboard-usecases";
+export {
+  GetDashboardSummary,
+  computeSummary,
+  computeMonthlyData,
+  computeCategoryHeatmap,
+} from "./dashboard-usecases";
 
 export type {
   AuthRepository,

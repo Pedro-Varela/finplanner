@@ -28,9 +28,12 @@ export async function createCategoryAction(
     const category = await new CreateCategory(repo()).execute({
       name: formData.name as string,
       type: formData.type as "income" | "expense",
+      icon: formData.icon as Category["icon"],
     });
     revalidatePath("/categories");
     revalidatePath("/transactions");
+    revalidatePath("/");
+    revalidatePath("/score");
     return { success: true, data: category };
   } catch (err) {
     return { success: false, error: (err as Error).message };
@@ -45,9 +48,12 @@ export async function updateCategoryAction(
     const category = await new UpdateCategory(repo()).execute(id as CategoryId, {
       name: formData.name as string,
       type: formData.type as "income" | "expense",
+      icon: formData.icon as Category["icon"],
     });
     revalidatePath("/categories");
     revalidatePath("/transactions");
+    revalidatePath("/");
+    revalidatePath("/score");
     return { success: true, data: category };
   } catch (err) {
     return { success: false, error: (err as Error).message };
@@ -59,6 +65,8 @@ export async function deleteCategoryAction(id: string): Promise<ActionResult> {
     await new DeleteCategory(repo()).execute(id as CategoryId);
     revalidatePath("/categories");
     revalidatePath("/transactions");
+    revalidatePath("/");
+    revalidatePath("/score");
     return { success: true, data: undefined };
   } catch (err) {
     return { success: false, error: (err as Error).message };

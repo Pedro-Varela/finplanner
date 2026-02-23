@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CategoryChip } from "@/components/category-chip";
 import {
   Table,
   TableBody,
@@ -151,7 +152,7 @@ export function CsvPreviewTable({ rows, rules, categories, parseErrors }: CsvPre
                     <TableCell>
                       {cat ? (
                         <div className="flex items-center gap-1.5">
-                          <span className="text-sm">{cat.name}</span>
+                          <CategoryChip name={cat.name} icon={cat.icon} type={cat.type} />
                           <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                             Sugerida
                           </Badge>

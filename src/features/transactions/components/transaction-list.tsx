@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -40,6 +39,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { Transaction, Category, TransactionFilters } from "@/core/entities";
+import { CategoryChip } from "@/components/category-chip";
 import { listTransactionsAction, listCategoriesAction } from "../actions";
 import { TransactionForm } from "./transaction-form";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
@@ -147,7 +147,7 @@ export function TransactionList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="animate-stagger space-y-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Transações</h1>
@@ -249,7 +249,7 @@ export function TransactionList() {
                     <TableCell className="font-medium">{tx.title}</TableCell>
                     <TableCell>
                       {cat ? (
-                        <Badge variant="outline">{cat.name}</Badge>
+                        <CategoryChip name={cat.name} icon={cat.icon} type={cat.type} />
                       ) : (
                         <button
                           onClick={() => handleCategorize(tx)}

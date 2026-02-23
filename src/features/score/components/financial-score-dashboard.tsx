@@ -27,6 +27,7 @@ import {
   type FinancialSnapshot,
   type StrategicInsight,
 } from "@/core/financial-intelligence";
+import { getCategoryIconDefinition } from "@/lib/category-icons";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -650,22 +651,32 @@ export function FinancialScoreDashboard() {
             {data.snapshot.topCategories.length === 0 ? (
               <p className="text-sm text-muted-foreground">Sem despesas categorizadas neste mês.</p>
             ) : (
-              data.snapshot.topCategories.map((category) => (
-                <div key={category.categoryId} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{category.categoryName}</span>
-                    <span className="font-medium">
-                      {category.percentage.toFixed(1)}% ({formatCurrency(category.amount)})
-                    </span>
+              data.snapshot.topCategories.map((category) => {
+                const iconDefinition = getCategoryIconDefinition(category.categoryIcon);
+                const Icon = iconDefinition.Icon;
+
+                return (
+                  <div key={category.categoryId} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-2">
+                        <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-muted">
+                          <Icon className="h-3.5 w-3.5" />
+                        </span>
+                        {category.categoryName}
+                      </span>
+                      <span className="font-medium">
+                        {category.percentage.toFixed(1)}% ({formatCurrency(category.amount)})
+                      </span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted">
+                      <div
+                        className="h-2 rounded-full bg-gradient-to-r from-rose-500 to-orange-400"
+                        style={{ width: `${Math.min(category.percentage, 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="h-2 rounded-full bg-muted">
-                    <div
-                      className="h-2 rounded-full bg-gradient-to-r from-rose-500 to-orange-400"
-                      style={{ width: `${Math.min(category.percentage, 100)}%` }}
-                    />
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>

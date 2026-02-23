@@ -65,7 +65,7 @@ function buildTopCategories(
   expenseTransactions: Transaction[],
   categories: Category[]
 ): FinancialTopCategory[] {
-  const categoryById = new Map(categories.map((category) => [String(category.id), category.name]));
+  const categoryById = new Map(categories.map((category) => [String(category.id), category]));
   const totals = new Map<string, number>();
 
   for (const transaction of expenseTransactions) {
@@ -77,12 +77,16 @@ function buildTopCategories(
   if (totalExpense <= 0) return [];
 
   return Array.from(totals.entries())
-    .map(([categoryId, amount]) => ({
-      categoryId,
-      categoryName: categoryById.get(categoryId) ?? "Categoria desconhecida",
-      amount,
-      percentage: clamp((amount / totalExpense) * 100, 0, 100),
-    }))
+    .map(([categoryId, amount]) => {
+      const category = categoryById.get(categoryId);
+      return {
+        categoryId,
+        categoryName: category?.name ?? "Categoria desconhecida",
+        categoryIcon: category?.icon ?? "tag",
+        amount,
+        percentage: clamp((amount / totalExpense) * 100, 0, 100),
+      };
+    })
     .sort((a, b) => b.amount - a.amount)
     .slice(0, 5);
 }

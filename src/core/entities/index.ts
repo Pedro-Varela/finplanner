@@ -7,8 +7,14 @@ export type {
   TransactionFilters,
 } from "./transaction";
 
-export type { Category, CategoryType } from "./category";
+export type { Category, CategoryType, CategoryIcon } from "./category";
 export type { CreateCategoryInput, UpdateCategoryInput } from "./category";
+export {
+  CATEGORY_ICON_OPTIONS,
+  DEFAULT_CATEGORY_ICON,
+  isCategoryIcon,
+  normalizeCategoryIcon,
+} from "./category";
 
 export type { User } from "./user";
 
