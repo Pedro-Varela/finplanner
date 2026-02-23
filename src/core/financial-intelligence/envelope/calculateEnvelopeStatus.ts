@@ -2,6 +2,7 @@ import type {
   EnvelopeBucketStatus,
   EnvelopeConfig,
   EnvelopeStatus,
+  EnvelopeStatusFlag,
   FinancialSnapshot,
 } from "../types";
 
@@ -69,9 +70,14 @@ function resolveActualBase(snapshot: FinancialSnapshot): number {
   return 0;
 }
 
-function aggregateStatus(statuses: Array<"ok" | "warning" | "over">): "ok" | "warning" | "over" {
-  if (statuses.includes("over")) return "over";
-  if (statuses.includes("warning")) return "warning";
+function aggregateStatus(buckets: EnvelopeBucketStatus[]): EnvelopeStatusFlag {
+  const overBuckets = buckets.filter((bucket) => bucket.status === "over");
+  const warningBuckets = buckets.filter((bucket) => bucket.status === "warning");
+  const maxPositiveDiff = Math.max(...buckets.map((bucket) => bucket.differencePct), 0);
+
+  if (overBuckets.length >= 2) return "over";
+  if (overBuckets.length === 1 && maxPositiveDiff >= 15) return "over";
+  if (overBuckets.length === 1 || warningBuckets.length > 0) return "warning";
   return "ok";
 }
 
@@ -87,7 +93,7 @@ export function calculateEnvelopeStatus(
   const investments = buildBucket(snapshot.investmentAmount, actualBase, config.investmentsPct);
 
   return {
-    status: aggregateStatus([essentials.status, leisure.status, investments.status]),
+    status: aggregateStatus([essentials, leisure, investments]),
     essentials,
     leisure,
     investments,

@@ -39,6 +39,12 @@ function listAvailableMonths(dates: string[]): string[] {
   return Array.from(monthRefs).sort((a, b) => b.localeCompare(a));
 }
 
+function latestTransactionMonth(dates: string[]): string | null {
+  if (dates.length === 0) return null;
+  const latestDate = dates.reduce((max, date) => (date > max ? date : max));
+  return latestDate.slice(0, 7);
+}
+
 export async function getFinancialScoreDataAction(
   input?: GetFinancialScoreDataInput
 ): Promise<ActionResult<FinancialScoreData>> {
@@ -54,13 +60,11 @@ export async function getFinancialScoreDataAction(
       recurringRepo.findAll(),
     ]);
 
-    const availableMonths = listAvailableMonths(
-      transactions.map((transaction) => transaction.date)
-    );
+    const transactionDates = transactions.map((transaction) => transaction.date);
+    const availableMonths = listAvailableMonths(transactionDates);
+    const defaultMonth = latestTransactionMonth(transactionDates) ?? currentMonthRef();
     const selectedMonth =
-      input?.monthRef && availableMonths.includes(input.monthRef)
-        ? input.monthRef
-        : availableMonths[0];
+      input?.monthRef && availableMonths.includes(input.monthRef) ? input.monthRef : defaultMonth;
 
     const snapshot = generateFinancialSnapshot(transactions, categories, recurring, {
       referenceMonth: selectedMonth,

@@ -43,7 +43,7 @@ function resolveInsightDestination(insight: Insight): InsightDestination {
     content.includes("assinatura") ||
     content.includes("pendente")
   ) {
-    return { href: "/recurring", label: "Ver recorrências" };
+    return { href: "/transactions", label: "Ver transações" };
   }
 
   if (content.includes("categoria")) {

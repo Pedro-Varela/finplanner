@@ -44,6 +44,14 @@ interface ScoreData {
   availableMonths: string[];
 }
 
+interface PillarExplanation {
+  id: keyof FinancialScore["breakdown"];
+  title: string;
+  formula: string;
+  description: string;
+  improveTip: string;
+}
+
 const PRESETS: Array<{ label: string; config: EnvelopeConfig }> = [
   {
     label: "Clássico 50/30/20",
@@ -56,6 +64,37 @@ const PRESETS: Array<{ label: string; config: EnvelopeConfig }> = [
   {
     label: "Agressivo 45/20/35",
     config: { essentialsPct: 45, leisurePct: 20, investmentsPct: 35 },
+  },
+];
+
+const PILLAR_EXPLANATIONS: PillarExplanation[] = [
+  {
+    id: "savingsScore",
+    title: "Poupança",
+    formula: "(Renda - Despesas) / Renda",
+    description: "Mede quanto da sua renda realmente sobra no fim do mês.",
+    improveTip: "Aumente a sobra mensal com corte de despesas variáveis e teto de gasto semanal.",
+  },
+  {
+    id: "commitmentScore",
+    title: "Comprometimento",
+    formula: "Recorrentes / Renda",
+    description: "Mostra quanto da renda já está travada em compromissos fixos.",
+    improveTip: "Renegocie contratos, reduza assinaturas e evite novas parcelas longas.",
+  },
+  {
+    id: "forecastScore",
+    title: "Previsibilidade",
+    formula: "Projeção de fechamento",
+    description: "Avalia se a projeção do saldo final do mês indica folga ou risco.",
+    improveTip: "Antecipe despesas grandes e distribua pagamentos para evitar picos no mês.",
+  },
+  {
+    id: "stabilityScore",
+    title: "Estabilidade",
+    formula: "Concentração por categoria",
+    description: "Avalia o risco de depender demais de uma categoria de gasto.",
+    improveTip: "Dilua custos em categorias equilibradas e reduza picos concentrados.",
   },
 ];
 
@@ -90,6 +129,13 @@ function insightAction(insight: StrategicInsight): { href: string; label: string
   }
 
   return { href: "/transactions", label: "Abrir transações" };
+}
+
+function pillarLevel(score: number): string {
+  if (score >= 80) return "forte";
+  if (score >= 60) return "estável";
+  if (score >= 40) return "atenção";
+  return "frágil";
 }
 
 function formatMonthRef(monthRef: string): string {
@@ -165,6 +211,50 @@ function EnvelopeStatusChip({ status }: { status: EnvelopeStatus["status"] }) {
       <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
       Envelope Over
     </span>
+  );
+}
+
+function StatusGuideCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Guia de Status do Envelope</CardTitle>
+        <CardDescription>Como cada status é definido e como chegar nele.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-emerald-700">OK</span>
+            <EnvelopeStatusChip status="ok" />
+          </div>
+          <p className="mt-2 text-sm text-emerald-700">
+            Nenhum bloco com desvio relevante. Objetivo: manter cada bloco com desvio até 4 p.p.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-amber-700">WARNING</span>
+            <EnvelopeStatusChip status="warning" />
+          </div>
+          <p className="mt-2 text-sm text-amber-700">
+            Existe desalinhamento moderado. Objetivo: reduzir blocos acima da meta para menos de 8
+            p.p.
+          </p>
+        </div>
+
+        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
+          <div className="flex items-center justify-between">
+            <span className="font-semibold text-rose-700">OVER</span>
+            <EnvelopeStatusChip status="over" />
+          </div>
+          <p className="mt-2 text-sm text-rose-700">
+            Desalinhamento forte. Ocorre quando 2+ blocos passam muito da meta, ou 1 bloco excede
+            bastante.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -410,6 +500,37 @@ export function FinancialScoreDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <Card className="xl:col-span-2">
+          <CardHeader>
+            <CardTitle className="text-lg">Como ler os 4 pilares do score</CardTitle>
+            <CardDescription>
+              Cada pilar vai de 0 a 100 e aponta um tipo diferente de saúde financeira.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3 md:grid-cols-2">
+            {PILLAR_EXPLANATIONS.map((pillar) => {
+              const value = data.score.breakdown[pillar.id];
+              return (
+                <div key={pillar.id} className="rounded-lg border p-4">
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold">{pillar.title}</p>
+                    <Badge variant="outline">
+                      {value}/100 • {pillarLevel(value)}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{pillar.description}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">Fórmula: {pillar.formula}</p>
+                  <p className="mt-2 text-xs font-medium text-foreground">{pillar.improveTip}</p>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        <StatusGuideCard />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">

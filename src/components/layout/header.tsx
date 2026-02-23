@@ -7,9 +7,9 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Tag,
-  PiggyBank,
-  Landmark,
-  Repeat,
+  Gauge,
+  TrendingUp,
+  LineChart,
   UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,10 @@ import { NotificationsBell } from "@/features/insights/components/notifications-
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Transações", href: "/transactions", icon: ArrowLeftRight },
+  { label: "Score", href: "/score", icon: Gauge },
+  { label: "Projeções", href: "/projections", icon: TrendingUp },
+  { label: "Forecast", href: "/forecast", icon: LineChart },
   { label: "Categorias", href: "/categories", icon: Tag },
-  { label: "Orçamentos", href: "/budgets", icon: PiggyBank },
-  { label: "Contas", href: "/accounts", icon: Landmark },
-  { label: "Recorrências", href: "/recurring", icon: Repeat },
   { label: "Perfil", href: "/profile", icon: UserCircle },
 ];
 

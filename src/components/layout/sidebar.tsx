@@ -6,9 +6,6 @@ import {
   LayoutDashboard,
   ArrowLeftRight,
   Tag,
-  PiggyBank,
-  Landmark,
-  Repeat,
   LineChart,
   UserCircle,
   TrendingUp,
@@ -27,9 +24,6 @@ const navItems = [
   { label: "Projeções", href: "/projections", icon: TrendingUp },
   { label: "Forecast", href: "/forecast", icon: LineChart },
   { label: "Categorias", href: "/categories", icon: Tag },
-  { label: "Orçamentos", href: "/budgets", icon: PiggyBank },
-  { label: "Contas", href: "/accounts", icon: Landmark },
-  { label: "Recorrências", href: "/recurring", icon: Repeat },
   { label: "Perfil", href: "/profile", icon: UserCircle },
 ];
 
