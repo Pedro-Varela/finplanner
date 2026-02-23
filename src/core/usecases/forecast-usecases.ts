@@ -47,7 +47,7 @@ export class GetFinancialForecast {
     let sumIncome = 0;
     let sumExpense = 0;
 
-    for (const [_, data] of sortedMonths) {
+    for (const [, data] of sortedMonths) {
       sumIncome += data.income;
       sumExpense += data.expense;
     }

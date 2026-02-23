@@ -1,4 +1,10 @@
 import { InsightId, Insight, CreateInsightInput } from "../entities/insight";
+import type { Transaction } from "../entities/transaction";
+import type { Category } from "../entities/category";
+import type { RecurringTransaction } from "../entities/recurring-transaction";
+import type { TransactionRepository } from "./transaction-usecases";
+import type { CategoryRepository } from "./category-usecases";
+import type { RecurringTransactionRepository } from "./recurring-usecases";
 
 export interface InsightRepository {
   findAllActive(): Promise<Insight[]>;
@@ -9,9 +15,9 @@ export interface InsightRepository {
 
 export interface GenerateInsightsDependencies {
   insightRepo: InsightRepository;
-  transactionRepo: any; // We'll type this properly
-  categoryRepo: any;
-  recurringRepo: any;
+  transactionRepo: TransactionRepository;
+  categoryRepo: CategoryRepository;
+  recurringRepo: RecurringTransactionRepository;
 }
 
 export class GenerateInsights {
@@ -31,10 +37,8 @@ export class GenerateInsights {
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
 
-    const expenses = transactions.filter((tx: any) => tx.type === "expense");
+    const expenses = transactions.filter((tx: Transaction) => tx.type === "expense");
 
     // --- Rule 1: Gastos Subindo ---
     const getYM = (dateStr: string) => {
@@ -42,12 +46,12 @@ export class GenerateInsights {
       return { y: d.getFullYear(), m: d.getMonth() };
     };
 
-    const currentMonthExpenses = expenses.filter((tx: any) => {
+    const currentMonthExpenses = expenses.filter((tx: Transaction) => {
       const { y, m } = getYM(tx.date);
       return y === currentYear && m === currentMonth;
     });
 
-    const last3MonthsExpenses = expenses.filter((tx: any) => {
+    const last3MonthsExpenses = expenses.filter((tx: Transaction) => {
       const { y, m } = getYM(tx.date);
       const dateScore = y * 12 + m;
       const currentScore = currentYear * 12 + currentMonth;
@@ -55,7 +59,7 @@ export class GenerateInsights {
       return diff >= 1 && diff <= 3;
     });
 
-    const catMap = new Map<string, string>(categories.map((c: any) => [c.id, c.name]));
+    const catMap = new Map<string, string>(categories.map((c: Category) => [c.id, c.name]));
     const catCurrent = new Map<string, number>();
     for (const tx of currentMonthExpenses) {
       catCurrent.set(tx.categoryId, (catCurrent.get(tx.categoryId) || 0) + tx.amount);
@@ -87,14 +91,14 @@ export class GenerateInsights {
     }
 
     // --- Rule 2: Gasto Recorrente Não Registrado ---
-    const activeRecurring = recurring.filter((r: any) => r.active && r.type === "expense");
+    const activeRecurring = recurring.filter((r: RecurringTransaction) => r.active);
     for (const r of activeRecurring) {
       const expectedDate = new Date(r.nextDate + "T00:00:00");
       // Se a data esperada já passou este mês ou hoje
       if (expectedDate <= now && expectedDate.getMonth() === currentMonth) {
         // Checar se já tem alguma transação pra essa categoria perto do valor
         const found = currentMonthExpenses.some(
-          (tx: any) =>
+          (tx: Transaction) =>
             tx.categoryId === r.categoryId && tx.title.toLowerCase().includes(r.title.toLowerCase())
         );
 

@@ -1,4 +1,3 @@
-import type { Transaction, Category } from "../entities";
 import type { TransactionRepository } from "./transaction-usecases";
 import type { CategoryRepository } from "./category-usecases";
 

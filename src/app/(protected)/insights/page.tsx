@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { getInsightsAction, resolveInsightAction } from "@/features/insights/actions";
-import type { Insight } from "@/core/entities/insight";
+import type { Insight, InsightId } from "@/core/entities/insight";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -29,7 +29,7 @@ export default function InsightsPage() {
   }, []);
 
   async function handleResolve(id: string) {
-    const res = await resolveInsightAction(id as any);
+    const res = await resolveInsightAction(id as InsightId);
     if (res.success) {
       toast.success("Insight marcado como resolvido!");
       setInsights((prev) => prev.filter((i) => i.id !== id));

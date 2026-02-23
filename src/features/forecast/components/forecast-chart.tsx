@@ -2,7 +2,6 @@
 
 import {
   Bar,
-  BarChart,
   CartesianGrid,
   Legend,
   Line,
@@ -26,11 +25,21 @@ export function ForecastChart({ data }: ForecastChartProps) {
     formattedMonth: d.monthYear.substring(5) + "/" + d.monthYear.substring(2, 4), // MM/YY
   }));
 
-  const customTooltip = ({ active, payload, label }: any) => {
+  const customTooltip = ({
+    active,
+    payload,
+    label,
+  }: {
+    active?: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    payload?: readonly any[];
+    label?: string | number;
+  }) => {
     if (active && payload && payload.length) {
       return (
         <div className="bg-background border rounded-lg shadow-lg p-3 text-sm">
           <p className="font-semibold mb-2">{label}</p>
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center gap-2 mb-1">
               <div
