@@ -12,6 +12,7 @@ import {
   LineChart,
   UserCircle,
   TrendingUp,
+  Gauge,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { LogoutButton } from "@/features/auth";
 const navItems = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Transações", href: "/transactions", icon: ArrowLeftRight },
+  { label: "Score", href: "/score", icon: Gauge },
   { label: "Projeções", href: "/projections", icon: TrendingUp },
   { label: "Forecast", href: "/forecast", icon: LineChart },
   { label: "Categorias", href: "/categories", icon: Tag },
