@@ -57,6 +57,14 @@ export { GetProjections } from "./projections-usecases";
 export type { InsightRepository, GenerateInsightsDependencies } from "./insight-usecases";
 export { GenerateInsights } from "./insight-usecases";
 
+export type {
+  FinancialIntelligencePersistenceRepository,
+  GenerateFinancialIntelligenceDependencies,
+  GenerateFinancialIntelligenceInput,
+  GenerateFinancialIntelligenceResult,
+} from "./financial-intelligence-usecases";
+export { GenerateFinancialIntelligence } from "./financial-intelligence-usecases";
+
 export type { GetFinancialForecastDependencies } from "./forecast-usecases";
 export { GetFinancialForecast } from "./forecast-usecases";
 
