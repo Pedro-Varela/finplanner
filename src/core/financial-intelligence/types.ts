@@ -79,3 +79,7 @@ export interface GenerateFinancialSnapshotInput {
   categories: Category[];
   recurring: RecurringTransaction[];
 }
+
+export interface GenerateFinancialSnapshotOptions {
+  referenceMonth?: string;
+}

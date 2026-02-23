@@ -4,7 +4,11 @@ import type {
   RecurringTransaction,
   Transaction,
 } from "@/core/entities";
-import type { FinancialSnapshot, FinancialTopCategory } from "../types";
+import type {
+  FinancialSnapshot,
+  FinancialTopCategory,
+  GenerateFinancialSnapshotOptions,
+} from "../types";
 
 const ESSENTIAL_KEYWORDS = [
   "aluguel",
@@ -71,19 +75,32 @@ function parseDateStart(date: string): Date {
 
 function resolveReferenceMonth(
   transactions: Transaction[],
-  recurring: RecurringTransaction[]
+  recurring: RecurringTransaction[],
+  referenceMonth?: string
 ): string {
-  const allDates = [
-    ...transactions.map((tx) => tx.date),
-    ...recurring.filter((r) => r.active).map((r) => r.nextDate),
-  ];
-
-  if (allDates.length === 0) {
-    return "1970-01";
+  const MONTH_REF_RE = /^\d{4}-\d{2}$/;
+  if (referenceMonth && MONTH_REF_RE.test(referenceMonth)) {
+    return referenceMonth;
   }
 
-  const latest = allDates.reduce((max, date) => (date > max ? date : max), allDates[0]);
-  return latest.slice(0, 7);
+  const transactionDates = transactions.map((tx) => tx.date);
+  if (transactionDates.length > 0) {
+    const latestTransactionDate = transactionDates.reduce((max, date) => (date > max ? date : max));
+    return latestTransactionDate.slice(0, 7);
+  }
+
+  const recurringDates = recurring.filter((item) => item.active).map((item) => item.nextDate);
+  if (recurringDates.length > 0) {
+    const latestRecurringDate = recurringDates.reduce((max, date) => (date > max ? date : max));
+    return latestRecurringDate.slice(0, 7);
+  }
+
+  return monthToRef(new Date());
+}
+
+function validateMonthRef(monthRef: string): string {
+  const MONTH_REF_RE = /^\d{4}-\d{2}$/;
+  return MONTH_REF_RE.test(monthRef) ? monthRef : monthToRef(new Date());
 }
 
 function recurringToMonthlyAmount(amount: number, frequency: RecurringFrequency): number {
@@ -135,9 +152,12 @@ function buildTopCategories(
 export function generateFinancialSnapshot(
   transactions: Transaction[],
   categories: Category[],
-  recurring: RecurringTransaction[]
+  recurring: RecurringTransaction[],
+  options?: GenerateFinancialSnapshotOptions
 ): FinancialSnapshot {
-  const monthRef = resolveReferenceMonth(transactions, recurring);
+  const monthRef = validateMonthRef(
+    resolveReferenceMonth(transactions, recurring, options?.referenceMonth)
+  );
   const monthTransactions = transactions.filter((transaction) =>
     transaction.date.startsWith(monthRef)
   );

@@ -16,11 +16,32 @@ import {
 export interface FinancialScoreData {
   snapshot: FinancialSnapshot;
   score: FinancialScore;
+  selectedMonth: string;
+  availableMonths: string[];
 }
 
 export type ActionResult<T> = { success: true; data: T } | { success: false; error: string };
 
-export async function getFinancialScoreDataAction(): Promise<ActionResult<FinancialScoreData>> {
+export interface GetFinancialScoreDataInput {
+  monthRef?: string;
+}
+
+function currentMonthRef(): string {
+  const now = new Date();
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  return `${year}-${month}`;
+}
+
+function listAvailableMonths(dates: string[]): string[] {
+  const monthRefs = new Set(dates.map((date) => date.slice(0, 7)));
+  monthRefs.add(currentMonthRef());
+  return Array.from(monthRefs).sort((a, b) => b.localeCompare(a));
+}
+
+export async function getFinancialScoreDataAction(
+  input?: GetFinancialScoreDataInput
+): Promise<ActionResult<FinancialScoreData>> {
   try {
     const client = createClient();
     const transactionRepo = new SupabaseTransactionRepository(client);
@@ -33,7 +54,17 @@ export async function getFinancialScoreDataAction(): Promise<ActionResult<Financ
       recurringRepo.findAll(),
     ]);
 
-    const snapshot = generateFinancialSnapshot(transactions, categories, recurring);
+    const availableMonths = listAvailableMonths(
+      transactions.map((transaction) => transaction.date)
+    );
+    const selectedMonth =
+      input?.monthRef && availableMonths.includes(input.monthRef)
+        ? input.monthRef
+        : availableMonths[0];
+
+    const snapshot = generateFinancialSnapshot(transactions, categories, recurring, {
+      referenceMonth: selectedMonth,
+    });
     const score = calculateFinancialScore(snapshot);
 
     return {
@@ -41,6 +72,8 @@ export async function getFinancialScoreDataAction(): Promise<ActionResult<Financ
       data: {
         snapshot,
         score,
+        selectedMonth,
+        availableMonths,
       },
     };
   } catch (error: unknown) {

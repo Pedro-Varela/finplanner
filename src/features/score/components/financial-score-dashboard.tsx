@@ -6,8 +6,10 @@ import {
   Activity,
   AlertTriangle,
   ArrowRight,
+  CheckCircle2,
   Gauge,
   Layers,
+  Loader2,
   PiggyBank,
   Target,
   TrendingUp,
@@ -26,15 +28,27 @@ import { formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { getFinancialScoreDataAction } from "../actions";
 
 interface ScoreData {
   snapshot: FinancialSnapshot;
   score: FinancialScore;
+  selectedMonth: string;
+  availableMonths: string[];
 }
 
 const PRESETS: Array<{ label: string; config: EnvelopeConfig }> = [
-  { label: "Clássico 50/30/20", config: { essentialsPct: 50, leisurePct: 30, investmentsPct: 20 } },
+  {
+    label: "Clássico 50/30/20",
+    config: { essentialsPct: 50, leisurePct: 30, investmentsPct: 20 },
+  },
   {
     label: "Conservador 60/20/20",
     config: { essentialsPct: 60, leisurePct: 20, investmentsPct: 20 },
@@ -52,12 +66,6 @@ function scoreTone(score: number): { label: string; color: string } {
   return { label: "Crítico", color: "text-rose-200" };
 }
 
-function envelopeStatusColor(status: EnvelopeStatus["status"]) {
-  if (status === "ok") return "text-emerald-600 bg-emerald-50 border-emerald-100";
-  if (status === "warning") return "text-amber-600 bg-amber-50 border-amber-100";
-  return "text-rose-600 bg-rose-50 border-rose-100";
-}
-
 function bucketBarColor(status: "ok" | "warning" | "over") {
   if (status === "ok") return "bg-emerald-500";
   if (status === "warning") return "bg-amber-500";
@@ -65,14 +73,35 @@ function bucketBarColor(status: "ok" | "warning" | "over") {
 }
 
 function insightAction(insight: StrategicInsight): { href: string; label: string } {
-  if (insight.type === "negative_balance_risk")
+  if (insight.type === "negative_balance_risk") {
     return { href: "/forecast", label: "Abrir forecast" };
-  if (insight.type === "growing_expense_trend")
+  }
+
+  if (insight.type === "growing_expense_trend") {
     return { href: "/projections", label: "Ver tendência" };
-  if (insight.type === "category_dependency")
+  }
+
+  if (insight.type === "category_dependency") {
     return { href: "/categories", label: "Rever categorias" };
-  if (insight.type === "low_savings") return { href: "/transactions", label: "Revisar gastos" };
+  }
+
+  if (insight.type === "low_savings") {
+    return { href: "/transactions", label: "Revisar gastos" };
+  }
+
   return { href: "/transactions", label: "Abrir transações" };
+}
+
+function formatMonthRef(monthRef: string): string {
+  const [year, month] = monthRef.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, 1));
+  const formatted = new Intl.DateTimeFormat("pt-BR", {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(date);
+
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
 function ScoreRing({ score }: { score: number }) {
@@ -112,6 +141,33 @@ function ScoreRing({ score }: { score: number }) {
   );
 }
 
+function EnvelopeStatusChip({ status }: { status: EnvelopeStatus["status"] }) {
+  if (status === "ok") {
+    return (
+      <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 shadow-sm">
+        <span className="h-2 w-2 rounded-full bg-emerald-500" />
+        Envelope OK
+      </span>
+    );
+  }
+
+  if (status === "warning") {
+    return (
+      <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 shadow-sm">
+        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+        Envelope Warning
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700 shadow-sm">
+      <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+      Envelope Over
+    </span>
+  );
+}
+
 interface BreakdownBarProps {
   label: string;
   value: number;
@@ -137,6 +193,7 @@ function BreakdownBar({ label, value }: BreakdownBarProps) {
 export function FinancialScoreDashboard() {
   const [data, setData] = useState<ScoreData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isMonthLoading, setIsMonthLoading] = useState(false);
   const [config, setConfig] = useState<EnvelopeConfig>({
     essentialsPct: 50,
     leisurePct: 30,
@@ -144,8 +201,12 @@ export function FinancialScoreDashboard() {
   });
 
   useEffect(() => {
-    async function load() {
+    let cancelled = false;
+
+    async function loadInitialData() {
       const result = await getFinancialScoreDataAction();
+      if (cancelled) return;
+
       if (!result.success) {
         toast.error(result.error);
         setLoading(false);
@@ -156,8 +217,28 @@ export function FinancialScoreDashboard() {
       setLoading(false);
     }
 
-    load();
+    void loadInitialData();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  async function handleMonthChange(monthRef: string) {
+    if (!data || monthRef === data.selectedMonth) return;
+
+    setIsMonthLoading(true);
+    const result = await getFinancialScoreDataAction({ monthRef });
+
+    if (!result.success) {
+      toast.error(result.error);
+      setIsMonthLoading(false);
+      return;
+    }
+
+    setData(result.data);
+    setIsMonthLoading(false);
+  }
 
   const envelope = useMemo(() => {
     if (!data) return null;
@@ -195,21 +276,46 @@ export function FinancialScoreDashboard() {
         <CardContent className="relative grid gap-6 p-6 md:grid-cols-[auto_1fr] md:items-center md:p-8">
           <ScoreRing score={data.score.overallScore} />
           <div className="space-y-4">
-            <div>
-              <p className="text-xs uppercase tracking-[0.24em] text-white/75">
-                Financial Intelligence
-              </p>
-              <h2 className="mt-1 text-3xl font-black tracking-tight">Seu Score Financeiro</h2>
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.24em] text-white/75">
+                  Financial Intelligence
+                </p>
+                <h2 className="mt-1 text-3xl font-black tracking-tight">Seu Score Financeiro</h2>
+              </div>
+
+              <div className="w-full md:w-[220px]">
+                <Select value={data.selectedMonth} onValueChange={handleMonthChange}>
+                  <SelectTrigger className="border-white/30 bg-white/10 text-white">
+                    <SelectValue placeholder="Selecionar mês" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {data.availableMonths.map((monthRef) => (
+                      <SelectItem key={monthRef} value={monthRef}>
+                        {formatMonthRef(monthRef)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="flex flex-wrap items-center gap-2">
               <Badge className="bg-white/20 text-white hover:bg-white/25">
-                Mês {data.snapshot.monthRef}
+                Mês {formatMonthRef(data.selectedMonth)}
               </Badge>
               <Badge className="bg-white/20 text-white hover:bg-white/25">{tone.label}</Badge>
               <Badge className="bg-white/20 text-white hover:bg-white/25">
                 Saldo projetado {formatCurrency(data.snapshot.projectedEndOfMonthBalance)}
               </Badge>
+              {isMonthLoading && (
+                <Badge className="bg-white/20 text-white hover:bg-white/25">
+                  <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                  Atualizando
+                </Badge>
+              )}
             </div>
+
             <p className={`text-sm font-semibold ${tone.color}`}>
               Taxa de poupança: {data.snapshot.savingsRate.toFixed(1)}% | Comprometimento
               recorrente: {data.snapshot.recurringCommitmentRate.toFixed(1)}%
@@ -257,10 +363,12 @@ export function FinancialScoreDashboard() {
               ))}
             </div>
 
-            <div
-              className={`rounded-md border px-3 py-2 text-sm font-medium ${envelopeStatusColor(envelope.status)}`}
-            >
-              Status geral do envelope: {envelope.status.toUpperCase()}
+            <div className="flex items-center justify-between rounded-md border border-muted/70 bg-muted/30 px-3 py-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                Status geral do envelope
+              </div>
+              <EnvelopeStatusChip status={envelope.status} />
             </div>
 
             <div className="space-y-3">
@@ -343,7 +451,9 @@ export function FinancialScoreDashboard() {
               <PiggyBank className="h-5 w-5" />
               Status do Envelope (Real x Meta)
             </CardTitle>
-            <CardDescription>A meta é normalizada automaticamente para 100%.</CardDescription>
+            <CardDescription>
+              Real é calculado com base na renda do mês; sem renda, usa a distribuição de gastos.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {[
@@ -351,18 +461,28 @@ export function FinancialScoreDashboard() {
               { label: "Estilo de vida", data: envelope.leisure },
               { label: "Investimentos", data: envelope.investments },
             ].map((bucket) => (
-              <div key={bucket.label} className="space-y-1">
+              <div key={bucket.label} className="space-y-1 rounded-lg border p-3">
                 <div className="flex items-center justify-between text-sm">
                   <span>{bucket.label}</span>
                   <span className="font-medium">
-                    {bucket.data.actualPct.toFixed(1)}% / meta {bucket.data.targetPct.toFixed(1)}%
+                    Real {bucket.data.actualPct.toFixed(1)}% | Meta{" "}
+                    {bucket.data.targetPct.toFixed(1)}%
                   </span>
                 </div>
                 <div className="h-2 rounded-full bg-muted">
                   <div
                     className={`h-2 rounded-full ${bucketBarColor(bucket.data.status)}`}
-                    style={{ width: `${Math.min(bucket.data.actualPct, 100)}%` }}
+                    style={{
+                      width:
+                        bucket.data.actualPct > 0
+                          ? `${Math.max(6, Math.min(bucket.data.actualPct, 100))}%`
+                          : "0%",
+                    }}
                   />
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Real: {formatCurrency(bucket.data.amount)} | Diferença:{" "}
+                  {bucket.data.differencePct.toFixed(1)} p.p.
                 </div>
               </div>
             ))}

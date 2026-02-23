@@ -58,6 +58,17 @@ function buildBucket(amount: number, totalIncome: number, targetPct: number): En
   };
 }
 
+function resolveActualBase(snapshot: FinancialSnapshot): number {
+  if (snapshot.totalIncome > 0) return snapshot.totalIncome;
+
+  const trackedEnvelopeAmount =
+    snapshot.essentialExpense + snapshot.leisureExpense + snapshot.investmentAmount;
+
+  if (trackedEnvelopeAmount > 0) return trackedEnvelopeAmount;
+  if (snapshot.totalExpense > 0) return snapshot.totalExpense;
+  return 0;
+}
+
 function aggregateStatus(statuses: Array<"ok" | "warning" | "over">): "ok" | "warning" | "over" {
   if (statuses.includes("over")) return "over";
   if (statuses.includes("warning")) return "warning";
@@ -69,18 +80,11 @@ export function calculateEnvelopeStatus(
   userEnvelopeConfig?: Partial<EnvelopeConfig>
 ): EnvelopeStatus {
   const config = normalizeEnvelopeConfig(userEnvelopeConfig);
+  const actualBase = resolveActualBase(snapshot);
 
-  const essentials = buildBucket(
-    snapshot.essentialExpense,
-    snapshot.totalIncome,
-    config.essentialsPct
-  );
-  const leisure = buildBucket(snapshot.leisureExpense, snapshot.totalIncome, config.leisurePct);
-  const investments = buildBucket(
-    snapshot.investmentAmount,
-    snapshot.totalIncome,
-    config.investmentsPct
-  );
+  const essentials = buildBucket(snapshot.essentialExpense, actualBase, config.essentialsPct);
+  const leisure = buildBucket(snapshot.leisureExpense, actualBase, config.leisurePct);
+  const investments = buildBucket(snapshot.investmentAmount, actualBase, config.investmentsPct);
 
   return {
     status: aggregateStatus([essentials.status, leisure.status, investments.status]),
