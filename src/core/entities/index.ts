@@ -35,3 +35,12 @@ export type {
   CreateRecurringInput,
   UpdateRecurringInput,
 } from "./recurring-transaction";
+
+export type {
+  MerchantRuleId,
+  MatchType,
+  MerchantRule,
+  CreateMerchantRuleInput,
+} from "./merchant-rule";
+
+export type { BulkTransactionInput, ImportResult } from "./import-types";

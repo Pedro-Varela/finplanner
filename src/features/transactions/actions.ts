@@ -2,14 +2,20 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { SupabaseTransactionRepository, SupabaseCategoryRepository } from "@/lib/repositories";
+import {
+  SupabaseTransactionRepository,
+  SupabaseCategoryRepository,
+  SupabaseMerchantRuleRepository,
+} from "@/lib/repositories";
 import {
   ListTransactions,
   CreateTransaction,
   UpdateTransaction,
   DeleteTransaction,
   ListCategories,
+  CreateMerchantRuleFromTransaction,
 } from "@/core/usecases";
+import { extractMerchantBase } from "@/lib/categorization";
 import type {
   TransactionId,
   CategoryId,
@@ -99,6 +105,45 @@ export async function deleteTransactionAction(id: string): Promise<ActionResult>
 export async function listCategoriesAction(): Promise<ActionResult<Category[]>> {
   try {
     return { success: true, data: await new ListCategories(catRepo()).execute() };
+  } catch (err) {
+    return { success: false, error: (err as Error).message };
+  }
+}
+
+export async function categorizeTransactionAction(
+  transactionId: string,
+  categoryId: string,
+  createRule: boolean
+): Promise<ActionResult<{ transaction: Transaction; ruleCreated: boolean }>> {
+  try {
+    const client = createClient();
+    const type = await resolveTypeFromCategory(categoryId);
+
+    const transaction = await new UpdateTransaction(
+      new SupabaseTransactionRepository(client)
+    ).execute(transactionId as TransactionId, {
+      categoryId: categoryId as CategoryId,
+      type,
+    });
+
+    let ruleCreated = false;
+
+    if (createRule) {
+      const merchantBase = extractMerchantBase(transaction.title);
+      if (merchantBase) {
+        const ruleRepo = new SupabaseMerchantRuleRepository(client);
+        await new CreateMerchantRuleFromTransaction(ruleRepo).execute(
+          merchantBase,
+          categoryId as CategoryId
+        );
+        ruleCreated = true;
+      }
+    }
+
+    revalidatePath("/transactions");
+    revalidatePath("/");
+
+    return { success: true, data: { transaction, ruleCreated } };
   } catch (err) {
     return { success: false, error: (err as Error).message };
   }

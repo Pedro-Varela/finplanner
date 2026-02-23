@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Tag } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,7 @@ import type { Transaction, Category, TransactionFilters } from "@/core/entities"
 import { listTransactionsAction, listCategoriesAction } from "../actions";
 import { TransactionForm } from "./transaction-form";
 import { DeleteTransactionDialog } from "./delete-transaction-dialog";
+import { CategorizeTransactionDialog } from "./categorize-transaction-dialog";
 import { TransactionFiltersBar } from "./transaction-filters";
 
 function formatCurrency(value: number) {
@@ -44,6 +45,9 @@ export function TransactionList() {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
+
+  const [categorizeOpen, setCategorizeOpen] = useState(false);
+  const [categorizingTx, setCategorizingTx] = useState<Transaction | null>(null);
 
   const load = useCallback((filters?: TransactionFilters) => {
     startTransition(async () => {
@@ -82,6 +86,11 @@ export function TransactionList() {
   function handleDelete(tx: Transaction) {
     setDeletingTx(tx);
     setDeleteOpen(true);
+  }
+
+  function handleCategorize(tx: Transaction) {
+    setCategorizingTx(tx);
+    setCategorizeOpen(true);
   }
 
   return (
@@ -133,7 +142,13 @@ export function TransactionList() {
                       {cat ? (
                         <Badge variant="outline">{cat.name}</Badge>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
+                        <button
+                          onClick={() => handleCategorize(tx)}
+                          className="inline-flex items-center gap-1 rounded-md border border-dashed border-muted-foreground/30 px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-primary/50 hover:text-primary"
+                        >
+                          <Tag className="h-3 w-3" />
+                          Categorizar
+                        </button>
                       )}
                     </TableCell>
                     <TableCell>{formatDate(tx.date)}</TableCell>
@@ -152,6 +167,11 @@ export function TransactionList() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
+                          {!cat && (
+                            <DropdownMenuItem onClick={() => handleCategorize(tx)}>
+                              Categorizar
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleEdit(tx)}>Editar</DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() => handleDelete(tx)}
@@ -182,6 +202,13 @@ export function TransactionList() {
         onOpenChange={setDeleteOpen}
         onSuccess={() => load(filtersRef.current)}
         transaction={deletingTx}
+      />
+
+      <CategorizeTransactionDialog
+        open={categorizeOpen}
+        onOpenChange={setCategorizeOpen}
+        onSuccess={() => load(filtersRef.current)}
+        transaction={categorizingTx}
       />
     </div>
   );

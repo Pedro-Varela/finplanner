@@ -8,6 +8,7 @@ import type {
   CreateTransactionInput,
   UpdateTransactionInput,
   TransactionFilters,
+  BulkTransactionInput,
 } from "@/core/entities";
 import type { TransactionRow } from "./database-types";
 import { RepositoryError } from "./errors";
@@ -145,5 +146,53 @@ export class SupabaseTransactionRepository implements TransactionRepository {
         error
       );
     }
+  }
+
+  async findByImportedHashes(hashes: string[]): Promise<Set<string>> {
+    if (hashes.length === 0) return new Set();
+
+    const { data, error } = await this.client
+      .from(TABLE)
+      .select("imported_hash")
+      .in("imported_hash", hashes);
+
+    if (error) {
+      throw new RepositoryError(`Falha ao buscar hashes: ${error.message}`, "QUERY_FAILED", error);
+    }
+
+    return new Set(
+      (data as { imported_hash: string | null }[])
+        .map((r) => r.imported_hash)
+        .filter((h): h is string => h !== null)
+    );
+  }
+
+  async bulkInsert(items: BulkTransactionInput[]): Promise<number> {
+    if (items.length === 0) return 0;
+
+    const userId = await this.getUserId();
+
+    const rows = items.map((item) => ({
+      user_id: userId,
+      title: item.title,
+      amount: item.amount,
+      type: item.type,
+      category_id: item.categoryId,
+      date: item.date,
+      source: item.source,
+      imported_hash: item.importedHash,
+    }));
+
+    const { data, error } = await this.client.from(TABLE).insert(rows).select("id");
+
+    if (error) {
+      throw new RepositoryError(
+        `Falha ao importar transações: ${error.message}`,
+        "CREATE_FAILED",
+        error
+      );
+    }
+
+    return data?.length ?? 0;
   }
 }

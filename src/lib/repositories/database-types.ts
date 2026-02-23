@@ -7,6 +7,18 @@ export interface TransactionRow {
   category_id: string;
   date: string;
   created_at: string;
+  source?: "manual" | "import_csv";
+  imported_hash?: string | null;
+}
+
+export interface MerchantRuleRow {
+  id: string;
+  user_id: string;
+  pattern: string;
+  match_type: "equals" | "contains" | "regex";
+  category_id: string | null;
+  priority: number;
+  created_at: string;
 }
 
 export interface CategoryRow {

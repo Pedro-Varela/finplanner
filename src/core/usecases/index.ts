@@ -44,4 +44,11 @@ export {
   DeleteRecurring,
 } from "./recurring-usecases";
 
+export type {
+  ImportTransactionRepository,
+  ImportMerchantRuleRepository,
+  CreateRuleRepository,
+} from "./import-usecases";
+export { ImportNubankCsvTransactions, CreateMerchantRuleFromTransaction } from "./import-usecases";
+
 export { ValidationError } from "../errors";
