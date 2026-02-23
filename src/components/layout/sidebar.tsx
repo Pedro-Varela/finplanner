@@ -44,7 +44,10 @@ export function Sidebar() {
             <Button
               key={item.href}
               variant={isActive ? "secondary" : "ghost"}
-              className={cn("w-full justify-start gap-3", isActive && "font-semibold")}
+              className={cn(
+                "w-full justify-start gap-3 rounded-xl transition-all duration-200",
+                isActive ? "font-semibold shadow-sm" : "hover:translate-x-0.5"
+              )}
               asChild
             >
               <Link href={item.href}>

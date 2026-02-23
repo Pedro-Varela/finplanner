@@ -11,6 +11,7 @@ import {
   Layers,
   Loader2,
   PiggyBank,
+  Sparkles,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -26,7 +27,7 @@ import {
   type FinancialSnapshot,
   type StrategicInsight,
 } from "@/core/financial-intelligence";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getFinancialScoreDataAction } from "../actions";
 
 interface ScoreData {
@@ -74,40 +76,72 @@ const PILLAR_EXPLANATIONS: PillarExplanation[] = [
     id: "savingsScore",
     title: "Poupança",
     formula: "(Renda - Despesas) / Renda",
-    description: "Mede quanto da sua renda realmente sobra no fim do mês.",
-    improveTip: "Aumente a sobra mensal com corte de despesas variáveis e teto de gasto semanal.",
+    description: "Mostra quanto da sua renda realmente sobra no fim do mês.",
+    improveTip: "Reduza despesas variáveis e defina um teto semanal para aumentar a sobra.",
   },
   {
     id: "commitmentScore",
     title: "Comprometimento",
     formula: "Recorrentes / Renda",
-    description: "Mostra quanto da renda já está travada em compromissos fixos.",
-    improveTip: "Renegocie contratos, reduza assinaturas e evite novas parcelas longas.",
+    description: "Mede quanto da sua renda já está travada em compromissos fixos.",
+    improveTip: "Renegocie contratos, corte assinaturas e evite novas parcelas longas.",
   },
   {
     id: "forecastScore",
     title: "Previsibilidade",
-    formula: "Projeção de fechamento",
-    description: "Avalia se a projeção do saldo final do mês indica folga ou risco.",
-    improveTip: "Antecipe despesas grandes e distribua pagamentos para evitar picos no mês.",
+    formula: "Projeção de fechamento do mês",
+    description: "Avalia se a tendência atual leva a folga ou pressão no saldo final.",
+    improveTip: "Distribua despesas grandes ao longo do mês e antecipe picos de saída.",
   },
   {
     id: "stabilityScore",
     title: "Estabilidade",
-    formula: "Concentração por categoria",
-    description: "Avalia o risco de depender demais de uma categoria de gasto.",
-    improveTip: "Dilua custos em categorias equilibradas e reduza picos concentrados.",
+    formula: "Concentração de despesas por categoria",
+    description: "Mede o risco de depender demais de uma única categoria de gasto.",
+    improveTip: "Dilua gastos concentrados e revise categorias com peso excessivo.",
   },
 ];
 
-function scoreTone(score: number): { label: string; color: string } {
-  if (score >= 80) return { label: "Excelente", color: "text-emerald-300" };
-  if (score >= 65) return { label: "Saudável", color: "text-sky-200" };
-  if (score >= 50) return { label: "Atenção", color: "text-amber-200" };
-  return { label: "Crítico", color: "text-rose-200" };
+type DidacticStatus = "saudavel" | "atencao" | "critico";
+
+interface DidacticStatusMeta {
+  label: string;
+  description: string;
+  chipClassName: string;
+  dotClassName: string;
 }
 
-function bucketBarColor(status: "ok" | "warning" | "over") {
+function didacticStatusMeta(status: EnvelopeStatus["status"]): DidacticStatusMeta {
+  if (status === "ok") {
+    return {
+      label: "Saudável",
+      description: "Distribuição equilibrada, sem desvios relevantes.",
+      chipClassName:
+        "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300",
+      dotClassName: "bg-emerald-500",
+    };
+  }
+
+  if (status === "warning") {
+    return {
+      label: "Atenção",
+      description: "Há desequilíbrio moderado que já pede ajuste.",
+      chipClassName:
+        "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300",
+      dotClassName: "bg-amber-500",
+    };
+  }
+
+  return {
+    label: "Crítico",
+    description: "Desequilíbrio forte com risco de apertar o caixa.",
+    chipClassName:
+      "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/30 dark:text-rose-300",
+    dotClassName: "bg-rose-500",
+  };
+}
+
+function bucketBarColor(status: EnvelopeStatus["status"]) {
   if (status === "ok") return "bg-emerald-500";
   if (status === "warning") return "bg-amber-500";
   return "bg-rose-500";
@@ -152,6 +186,13 @@ function formatMonthRef(monthRef: string): string {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
+function scoreTone(score: number): { label: string; color: string } {
+  if (score >= 80) return { label: "Excelente", color: "text-emerald-300" };
+  if (score >= 65) return { label: "Saudável", color: "text-sky-200" };
+  if (score >= 50) return { label: "Atenção", color: "text-amber-200" };
+  return { label: "Crítico", color: "text-rose-200" };
+}
+
 function ScoreRing({ score }: { score: number }) {
   const size = 150;
   const stroke = 11;
@@ -190,141 +231,22 @@ function ScoreRing({ score }: { score: number }) {
 }
 
 function EnvelopeStatusChip({ status }: { status: EnvelopeStatus["status"] }) {
-  if (status === "ok") {
-    return (
-      <span className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-700 shadow-sm">
-        <span className="h-2 w-2 rounded-full bg-emerald-500" />
-        Envelope OK
-      </span>
-    );
-  }
-
-  if (status === "warning") {
-    return (
-      <span className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 shadow-sm">
-        <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
-        Envelope Warning
-      </span>
-    );
-  }
+  const meta = didacticStatusMeta(status);
 
   return (
-    <span className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-rose-700 shadow-sm">
-      <span className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
-      Envelope Over
+    <span
+      className={cn(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide shadow-sm",
+        meta.chipClassName
+      )}
+    >
+      <span className={cn("h-2 w-2 rounded-full", meta.dotClassName)} />
+      Status {meta.label}
     </span>
   );
 }
 
-function StatusGuideCard() {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Guia de Status do Envelope</CardTitle>
-        <CardDescription>Como cada status é definido e como chegar nele.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-emerald-700">OK</span>
-            <EnvelopeStatusChip status="ok" />
-          </div>
-          <p className="mt-2 text-sm text-emerald-700">
-            Nenhum bloco com desvio relevante. Objetivo: manter cada bloco com desvio até 4 p.p.
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-amber-700">WARNING</span>
-            <EnvelopeStatusChip status="warning" />
-          </div>
-          <p className="mt-2 text-sm text-amber-700">
-            Existe desalinhamento moderado. Objetivo: reduzir blocos acima da meta para menos de 8
-            p.p.
-          </p>
-        </div>
-
-        <div className="rounded-lg border border-rose-200 bg-rose-50 p-3">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-rose-700">OVER</span>
-            <EnvelopeStatusChip status="over" />
-          </div>
-          <p className="mt-2 text-sm text-rose-700">
-            Desalinhamento forte. Ocorre quando 2+ blocos passam muito da meta, ou 1 bloco excede
-            bastante.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function CategoryClassificationCard() {
-  const essentialExamples = ESSENTIAL_CATEGORY_KEYWORDS.slice(0, 8);
-  const investmentExamples = INVESTMENT_CATEGORY_KEYWORDS.slice(0, 8);
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">Como o engine classifica os gastos</CardTitle>
-        <CardDescription>
-          Classificação por palavras-chave no nome da categoria, sem IA e 100% determinística.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <div className="rounded-lg border border-sky-200 bg-sky-50 p-3">
-          <p className="font-semibold text-sky-700">Essenciais</p>
-          <p className="mt-1 text-sm text-sky-700">
-            Moradia, contas básicas, alimentação, saúde, transporte, educação e impostos.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {essentialExamples.map((keyword) => (
-              <Badge key={keyword} variant="outline" className="border-sky-300 text-sky-700">
-                {keyword}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
-          <p className="font-semibold text-emerald-700">Investimentos</p>
-          <p className="mt-1 text-sm text-emerald-700">
-            Aportes financeiros e construção de patrimônio.
-          </p>
-          <div className="mt-2 flex flex-wrap gap-1">
-            {investmentExamples.map((keyword) => (
-              <Badge
-                key={keyword}
-                variant="outline"
-                className="border-emerald-300 text-emerald-700"
-              >
-                {keyword}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
-          <p className="font-semibold text-violet-700">Estilo de vida</p>
-          <p className="mt-1 text-sm text-violet-700">
-            Tudo que não bate com regras de Essenciais ou Investimentos cai aqui por padrão.
-          </p>
-          <p className="mt-1 text-xs text-violet-700/90">
-            Exemplo comum: lazer, restaurantes, compras e entretenimento.
-          </p>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-interface BreakdownBarProps {
-  label: string;
-  value: number;
-}
-
-function BreakdownBar({ label, value }: BreakdownBarProps) {
+function BreakdownBar({ label, value }: { label: string; value: number }) {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
@@ -338,6 +260,152 @@ function BreakdownBar({ label, value }: BreakdownBarProps) {
         />
       </div>
     </div>
+  );
+}
+
+function StatusGuideTab() {
+  const statuses: Array<{ key: DidacticStatus; status: EnvelopeStatus["status"]; howTo: string }> =
+    [
+      {
+        key: "saudavel",
+        status: "ok",
+        howTo: "Mantenha desvio de cada bloco até 4 p.p. da meta.",
+      },
+      {
+        key: "atencao",
+        status: "warning",
+        howTo: "Reduza o bloco acima da meta para abaixo de 8 p.p.",
+      },
+      {
+        key: "critico",
+        status: "over",
+        howTo: "Replaneje categorias e corte imediato em blocos superdimensionados.",
+      },
+    ];
+
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {statuses.map((item) => {
+        const meta = didacticStatusMeta(item.status);
+        return (
+          <div key={item.key} className={cn("rounded-xl border p-4", meta.chipClassName)}>
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold">{meta.label}</p>
+              <EnvelopeStatusChip status={item.status} />
+            </div>
+            <p className="mt-2 text-sm">{meta.description}</p>
+            <p className="mt-2 text-xs font-medium">Como chegar: {item.howTo}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ClassificationGuideTab() {
+  const essentialExamples = ESSENTIAL_CATEGORY_KEYWORDS.slice(0, 8);
+  const investmentExamples = INVESTMENT_CATEGORY_KEYWORDS.slice(0, 8);
+
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      <div className="rounded-xl border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/60 dark:bg-sky-950/30">
+        <p className="font-semibold text-sky-700 dark:text-sky-300">Essenciais</p>
+        <p className="mt-1 text-sm text-sky-700 dark:text-sky-300">
+          Moradia, contas básicas, alimentação, saúde, transporte, educação e impostos.
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {essentialExamples.map((keyword) => (
+            <Badge key={keyword} variant="outline" className="border-sky-300 text-sky-700">
+              {keyword}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30">
+        <p className="font-semibold text-emerald-700 dark:text-emerald-300">Investimentos</p>
+        <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-300">
+          Aportes financeiros e construção de patrimônio.
+        </p>
+        <div className="mt-2 flex flex-wrap gap-1">
+          {investmentExamples.map((keyword) => (
+            <Badge key={keyword} variant="outline" className="border-emerald-300 text-emerald-700">
+              {keyword}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-violet-200 bg-violet-50 p-4 dark:border-violet-900/60 dark:bg-violet-950/30">
+        <p className="font-semibold text-violet-700 dark:text-violet-300">Estilo de vida</p>
+        <p className="mt-1 text-sm text-violet-700 dark:text-violet-300">
+          Tudo que não bate com regras de Essenciais ou Investimentos cai aqui por padrão.
+        </p>
+        <p className="mt-2 text-xs text-violet-700/90 dark:text-violet-300/90">
+          Exemplo comum: lazer, restaurantes, compras e entretenimento.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PillarsGuideTab({ score }: { score: FinancialScore }) {
+  return (
+    <div className="grid gap-3 md:grid-cols-2">
+      {PILLAR_EXPLANATIONS.map((pillar) => {
+        const value = score.breakdown[pillar.id];
+        return (
+          <div key={pillar.id} className="rounded-xl border p-4">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-semibold">{pillar.title}</p>
+              <Badge variant="outline">
+                {value}/100 • {pillarLevel(value)}
+              </Badge>
+            </div>
+            <p className="mt-2 text-sm text-muted-foreground">{pillar.description}</p>
+            <p className="mt-2 text-xs text-muted-foreground">Fórmula: {pillar.formula}</p>
+            <p className="mt-2 text-xs font-medium text-foreground">{pillar.improveTip}</p>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ScoreHelpCenter({ score }: { score: FinancialScore }) {
+  return (
+    <Card className="border-dashed">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Sparkles className="h-5 w-5" />
+          Entenda como funciona o score
+        </CardTitle>
+        <CardDescription>
+          Uma seção de ajuda separada para entender pilares, classificação e status.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="pillars" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="pillars">Pilares</TabsTrigger>
+            <TabsTrigger value="classification">Classificação</TabsTrigger>
+            <TabsTrigger value="status">Status</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="pillars" className="animate-in-fade">
+            <PillarsGuideTab score={score} />
+          </TabsContent>
+
+          <TabsContent value="classification" className="animate-in-fade">
+            <ClassificationGuideTab />
+          </TabsContent>
+
+          <TabsContent value="status" className="animate-in-fade">
+            <StatusGuideTab />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -418,9 +486,10 @@ export function FinancialScoreDashboard() {
   }
 
   const tone = scoreTone(data.score.overallScore);
+  const currentStatusMeta = didacticStatusMeta(envelope.status);
 
   return (
-    <div className="space-y-6">
+    <div className="animate-stagger space-y-6">
       <Card className="relative overflow-hidden border-none bg-gradient-to-br from-sky-700 via-cyan-600 to-emerald-500 text-white shadow-xl">
         <div className="absolute -left-14 -top-16 h-44 w-44 rounded-full bg-white/20 blur-2xl" />
         <div className="absolute -bottom-12 -right-10 h-40 w-40 rounded-full bg-emerald-200/40 blur-2xl" />
@@ -458,6 +527,9 @@ export function FinancialScoreDashboard() {
               <Badge className="bg-white/20 text-white hover:bg-white/25">{tone.label}</Badge>
               <Badge className="bg-white/20 text-white hover:bg-white/25">
                 Saldo projetado {formatCurrency(data.snapshot.projectedEndOfMonthBalance)}
+              </Badge>
+              <Badge className="bg-white/20 text-white hover:bg-white/25">
+                {currentStatusMeta.label}
               </Badge>
               {isMonthLoading && (
                 <Badge className="bg-white/20 text-white hover:bg-white/25">
@@ -517,7 +589,7 @@ export function FinancialScoreDashboard() {
             <div className="flex items-center justify-between rounded-md border border-muted/70 bg-muted/30 px-3 py-2">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                Status geral do envelope
+                Situação atual do envelope
               </div>
               <EnvelopeStatusChip status={envelope.status} />
             </div>
@@ -563,38 +635,7 @@ export function FinancialScoreDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Como ler os 4 pilares do score</CardTitle>
-            <CardDescription>
-              Cada pilar vai de 0 a 100 e aponta um tipo diferente de saúde financeira.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-3 md:grid-cols-2">
-            {PILLAR_EXPLANATIONS.map((pillar) => {
-              const value = data.score.breakdown[pillar.id];
-              return (
-                <div key={pillar.id} className="rounded-lg border p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold">{pillar.title}</p>
-                    <Badge variant="outline">
-                      {value}/100 • {pillarLevel(value)}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{pillar.description}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">Fórmula: {pillar.formula}</p>
-                  <p className="mt-2 text-xs font-medium text-foreground">{pillar.improveTip}</p>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        <StatusGuideCard />
-      </div>
-
-      <CategoryClassificationCard />
+      <ScoreHelpCenter score={data.score} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
@@ -633,10 +674,10 @@ export function FinancialScoreDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
               <PiggyBank className="h-5 w-5" />
-              Status do Envelope (Real x Meta)
+              Real x Meta por Bloco
             </CardTitle>
             <CardDescription>
-              Real é calculado com base na renda do mês; sem renda, usa a distribuição de gastos.
+              Real usa renda do mês; sem renda, usa distribuição dos gastos registrados.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -644,32 +685,39 @@ export function FinancialScoreDashboard() {
               { label: "Essenciais", data: envelope.essentials },
               { label: "Estilo de vida", data: envelope.leisure },
               { label: "Investimentos", data: envelope.investments },
-            ].map((bucket) => (
-              <div key={bucket.label} className="space-y-1 rounded-lg border p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span>{bucket.label}</span>
-                  <span className="font-medium">
-                    Real {bucket.data.actualPct.toFixed(1)}% | Meta{" "}
-                    {bucket.data.targetPct.toFixed(1)}%
-                  </span>
+            ].map((bucket) => {
+              const statusMeta = didacticStatusMeta(bucket.data.status);
+
+              return (
+                <div key={bucket.label} className="space-y-1 rounded-xl border p-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{bucket.label}</span>
+                    <div className="flex items-center gap-2">
+                      <EnvelopeStatusChip status={bucket.data.status} />
+                      <span className="font-medium">
+                        Real {bucket.data.actualPct.toFixed(1)}% | Meta{" "}
+                        {bucket.data.targetPct.toFixed(1)}%
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-2 rounded-full bg-muted">
+                    <div
+                      className={`h-2 rounded-full ${bucketBarColor(bucket.data.status)}`}
+                      style={{
+                        width:
+                          bucket.data.actualPct > 0
+                            ? `${Math.max(6, Math.min(bucket.data.actualPct, 100))}%`
+                            : "0%",
+                      }}
+                    />
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {statusMeta.description} | Real: {formatCurrency(bucket.data.amount)} |
+                    Diferença: {bucket.data.differencePct.toFixed(1)} p.p.
+                  </div>
                 </div>
-                <div className="h-2 rounded-full bg-muted">
-                  <div
-                    className={`h-2 rounded-full ${bucketBarColor(bucket.data.status)}`}
-                    style={{
-                      width:
-                        bucket.data.actualPct > 0
-                          ? `${Math.max(6, Math.min(bucket.data.actualPct, 100))}%`
-                          : "0%",
-                    }}
-                  />
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  Real: {formatCurrency(bucket.data.amount)} | Diferença:{" "}
-                  {bucket.data.differencePct.toFixed(1)} p.p.
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </CardContent>
         </Card>
       </div>
@@ -697,7 +745,7 @@ export function FinancialScoreDashboard() {
               return (
                 <div
                   key={insight.id}
-                  className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
+                  className="flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-center md:justify-between"
                 >
                   <div>
                     <div className="flex items-center gap-2">
