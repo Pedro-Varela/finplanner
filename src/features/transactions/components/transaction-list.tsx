@@ -1,7 +1,9 @@
 "use client";
 
+import Link from "next/link";
+
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
-import { Plus, Tag } from "lucide-react";
+import { Plus, Tag, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -100,10 +102,18 @@ export function TransactionList() {
           <h1 className="text-3xl font-bold tracking-tight">Transações</h1>
           <p className="text-muted-foreground">Gerencie suas receitas e despesas.</p>
         </div>
-        <Button onClick={handleNew} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Nova transação
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="gap-2" asChild>
+            <Link href="/transactions/import">
+              <Upload className="h-4 w-4" />
+              Importar CSV
+            </Link>
+          </Button>
+          <Button onClick={handleNew} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Nova transação
+          </Button>
+        </div>
       </div>
 
       <TransactionFiltersBar categories={categories} onFiltersChange={handleFiltersChange} />
