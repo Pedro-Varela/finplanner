@@ -22,7 +22,6 @@ export async function getProjectionsAction(): Promise<ActionResult<ProjectionsDa
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "Ocorreu um erro ao carregar as projeções.";
-    console.error("Erro ao buscar projeções:", error);
     return {
       success: false,
       error: message,

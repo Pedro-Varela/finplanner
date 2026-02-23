@@ -54,10 +54,4 @@ export type {
   UpdateInsightInput,
 } from "./insight";
 
-export type {
-  ForecastScenarioType,
-  MonthlyForecast,
-  ForecastData,
-} from "./forecast";
-
-
+export type { ForecastScenarioType, MonthlyForecast, ForecastData } from "./forecast";
