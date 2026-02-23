@@ -69,7 +69,7 @@ export function ForecastChart({ data }: ForecastChartProps) {
         <YAxis
           tickLine={false}
           axisLine={false}
-          tickFormatter={(value) => `€${value}`}
+          tickFormatter={(value) => `R$${value}`}
           className="text-xs text-muted-foreground"
         />
         <Tooltip content={customTooltip} cursor={{ fill: "rgba(0,0,0,0.05)" }} />

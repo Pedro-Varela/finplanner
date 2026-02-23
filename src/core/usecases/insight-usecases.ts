@@ -21,7 +21,7 @@ export interface GenerateInsightsDependencies {
 }
 
 export class GenerateInsights {
-  constructor(private deps: GenerateInsightsDependencies) {}
+  constructor(private deps: GenerateInsightsDependencies) { }
 
   async execute(): Promise<void> {
     // 1. Fetch data
@@ -83,7 +83,7 @@ export class GenerateInsights {
         if (!existingTitles.has(title)) {
           newInsights.push({
             title,
-            description: `Você já gastou €${currentAmount.toFixed(2)} em ${catName} este mês, o que é mais de 20% acima da sua média de €${avg3Months.toFixed(2)}.`,
+            description: `Você já gastou R$${currentAmount.toFixed(2)} em ${catName} este mês, o que é mais de 20% acima da sua média de R$${avg3Months.toFixed(2)}.`,
             type: "warning",
           });
         }
