@@ -7,7 +7,8 @@ import { SupabaseInsightRepository } from "@/lib/repositories/insight-repository
 import { SupabaseTransactionRepository } from "@/lib/repositories/transaction-repository";
 import { SupabaseCategoryRepository } from "@/lib/repositories/category-repository";
 import { SupabaseRecurringRepository } from "@/lib/repositories/recurring-repository";
-import { GenerateInsights } from "@/core/usecases";
+import { SupabaseFinancialIntelligenceRepository } from "@/lib/repositories/financial-intelligence-repository";
+import { GenerateFinancialIntelligence } from "@/core/usecases/financial-intelligence-usecases";
 import type { Insight, InsightId } from "@/core/entities/insight";
 
 export type ActionResult<T> = { success: true; data: T } | { success: false; error: string };
@@ -27,16 +28,16 @@ export async function getInsightsAction(): Promise<ActionResult<Insight[]>> {
 export async function generateInsightsAction(): Promise<ActionResult<void>> {
   try {
     const client = createClient();
-    const insightRepo = new SupabaseInsightRepository(client);
     const transactionRepo = new SupabaseTransactionRepository(client);
     const categoryRepo = new SupabaseCategoryRepository(client);
     const recurringRepo = new SupabaseRecurringRepository(client);
+    const persistenceRepo = new SupabaseFinancialIntelligenceRepository(client);
 
-    const usecase = new GenerateInsights({
-      insightRepo,
+    const usecase = new GenerateFinancialIntelligence({
       transactionRepo,
       categoryRepo,
       recurringRepo,
+      persistenceRepo,
     });
 
     await usecase.execute();
